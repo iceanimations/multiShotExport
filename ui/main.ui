@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>443</width>
-    <height>314</height>
+    <width>545</width>
+    <height>770</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -54,7 +54,20 @@
        </widget>
       </item>
       <item>
-       <widget class="QToolButton" name="collapseAllButton">
+       <spacer name="horizontalSpacer_2">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item>
+       <widget class="QToolButton" name="toggleCollapseButton">
         <property name="toolTip">
          <string>Collapse/Expand all Shots</string>
         </property>
@@ -78,8 +91,8 @@
         <rect>
          <x>0</x>
          <y>0</y>
-         <width>423</width>
-         <height>166</height>
+         <width>525</width>
+         <height>622</height>
         </rect>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_3">
@@ -87,7 +100,11 @@
          <number>0</number>
         </property>
         <item>
-         <layout class="QVBoxLayout" name="itemLayout"/>
+         <layout class="QVBoxLayout" name="itemLayout">
+          <property name="spacing">
+           <number>0</number>
+          </property>
+         </layout>
         </item>
         <item>
          <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -161,7 +178,7 @@
        </spacer>
       </item>
       <item>
-       <widget class="QPushButton" name="ExportButton">
+       <widget class="QPushButton" name="exportButton">
         <property name="toolTip">
          <string>Start exporting selected Shots</string>
         </property>
@@ -186,7 +203,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>443</width>
+     <width>545</width>
      <height>21</height>
     </rect>
    </property>
@@ -202,12 +219,60 @@
    <slot>close()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>398</x>
-     <y>574</y>
+     <x>500</x>
+     <y>732</y>
     </hint>
     <hint type="destinationlabel">
      <x>169</x>
      <y>585</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>addDirectoryButton</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>label</receiver>
+   <slot>setVisible(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>56</x>
+     <y>721</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>41</x>
+     <y>693</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>addDirectoryButton</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>directoryBox</receiver>
+   <slot>setVisible(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>98</x>
+     <y>720</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>98</x>
+     <y>692</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>addDirectoryButton</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>browseButton</receiver>
+   <slot>setVisible(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>71</x>
+     <y>730</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>527</x>
+     <y>702</y>
     </hint>
    </hints>
   </connection>
