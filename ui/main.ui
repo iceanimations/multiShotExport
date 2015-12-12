@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>545</width>
-    <height>770</height>
+    <width>799</width>
+    <height>706</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -19,8 +19,11 @@
      <layout class="QHBoxLayout" name="horizontalLayout">
       <item>
        <widget class="QComboBox" name="projectBox">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
         <property name="toolTip">
-         <string>Select Project</string>
+         <string>Project</string>
         </property>
         <item>
          <property name="text">
@@ -31,8 +34,11 @@
       </item>
       <item>
        <widget class="QComboBox" name="epBox">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
         <property name="toolTip">
-         <string>Select Episode</string>
+         <string>Episode</string>
         </property>
         <item>
          <property name="text">
@@ -43,8 +49,11 @@
       </item>
       <item>
        <widget class="QComboBox" name="seqBox">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
         <property name="toolTip">
-         <string>Select Sequence</string>
+         <string>Sequence</string>
         </property>
         <item>
          <property name="text">
@@ -91,8 +100,8 @@
         <rect>
          <x>0</x>
          <y>0</y>
-         <width>525</width>
-         <height>622</height>
+         <width>779</width>
+         <height>558</height>
         </rect>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_3">
@@ -203,7 +212,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>545</width>
+     <width>799</width>
      <height>21</height>
     </rect>
    </property>

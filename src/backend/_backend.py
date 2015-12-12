@@ -3,6 +3,7 @@ Created on Nov 24, 2015
 
 @author: qurban.ali
 '''
+from createLayout.src import utilities as utils
 import pymel.core as pc
 import tacticCalls as tc
 import os.path as osp
@@ -12,11 +13,15 @@ import iutil
 import imaya
 import json
 import os
+import re
 
+reload(utils)
 reload(tc)
 reload(iutil)
 reload(imaya)
 reload(fillinout)
+
+from pprint import pprint
 
 # create a directory to temporarily export the files 
 tempLocation = osp.join(osp.expanduser('~'), 'multiShotExport')
@@ -24,7 +29,7 @@ if not osp.exists(tempLocation):
     os.mkdir(tempLocation)
 
 class Shot(object):
-    def __init__(self, parent, shot):
+    def __init__(self, parent=None, shot=None):
         self.parentWin = parent
         self.shot = shot
         self.cache = True # determines whether to export cache or not
@@ -41,8 +46,6 @@ class Shot(object):
         self.bakeCamera = False # determines whether to bake camera or not before export
         self.nukeCamera = True # determines whether to export camera for nuke or not
         self.tempPath = None # temp path to shot directory in user home
-        
-        #TODO: add nano texture export feature
 
         self.setup()
         self.saveToScene()
@@ -73,19 +76,19 @@ class Shot(object):
         for cam in pc.ls(type='camera'):
             if imaya.getNiceName(cam.firstParent().name()).lower() == self.shot.lower():
                 self.cameraName = cam.firstParent().name()
+        if not self.cameraName: return
         
         self.addAttr()
         
         # get the data from the camera attribute
-        if self.cameraName:
-            rawData = pc.PyNode(self.cameraName).mseData.get()
-            if rawData:
-                data = json.loads(rawData)
-            # create the shot directory in user home
-            self.tempPath = osp.join(tempLocation, self.getCameraNiceName())
-            if not osp.exists(self.tempPath):
-                os.mkdir(self.tempPath)
-        
+        rawData = pc.PyNode(self.cameraName).mseData.get()
+        if rawData:
+            data = json.loads(rawData)
+        # create the shot directory in user home
+        self.tempPath = osp.join(tempLocation, self.getCameraNiceName())
+        if not osp.exists(self.tempPath):
+            os.mkdir(self.tempPath)
+
         # set the frame range
         frameRange, err = tc.getFrameRange(self.shot)
         if frameRange:
@@ -99,14 +102,10 @@ class Shot(object):
             # set the assets
             for geoset in getGeoSets():
                 name = imaya.getNiceName(geoset.name()).lower().replace('_geo_set', '')
-                if not geoset.name() in data['geosets'].keys():
-                    data['geosets'][geoset.name()] = name in assets
-            # remove extra goesets from self.geosets
-            extraKeys = []
-            for geoset in data['geosets'].keys():
-                if geoset not in [gs.name() for gs in getGeoSets()]:
-                    extraKeys.append(geoset)
-            for ek in extraKeys: self.geosets.remove(ek)
+                if data['geosets'].has_key(geoset.name()):
+                    self.geosets[geoset.name()] = data['geosets'][geoset.name()]
+                else:
+                    self.geosets[geoset.name()] = name in assets
             # set display layers
             for layer in imaya.getDisplayLayers():
                 if data['displayLayers'].has_key(layer.name()):
@@ -171,29 +170,37 @@ class Shot(object):
         self.switchToMe()
         err = self.exportCamera()
         if err: errors.append(err)
-        #TODO: restore the displayLayer states
+        state = getDisplayLayerState()
         err = self.exportPreview()
+        restoreDisplayLayerState(state)
+        if err: errors.append(err)
+        err = self.exportCache()
+        if err: errors.append(err)
+        err = self.exportAnimatedTextures()
         if err: errors.append(err)
         return errors
     
     def exportCache(self):
         if not self.cache: return
-        pc.select(cl=True)
-        if self.geosets:
-            conf = getConf()
-            conf['start_time'] = self.startFrame
-            conf['end_time'] = self.endFrame
-            conf['cache_dir'] = osp.join(self.tempPath, 'cache')
-            command =  'doCreateGeometryCache3 {version} {{ "{time_range_mode}", "{start_time}", "{end_time}", "{cache_file_dist}", "{refresh_during_caching}", "{cache_dir}", "{cache_per_geo}", "{cache_name}", "{cache_name_as_prefix}", "{action_to_perform}", "{force_save}", "{simulation_rate}", "{sample_multiplier}", "{inherit_modf_from_cache}", "{store_doubles_as_float}", "{cache_format}", "{worldSpace}"}};'.format(**conf)
-            meshes = self.MakeMeshes()
-            pc.select(meshes)
-            pc.Mel.eval(command)
-            pc.delete(meshes)
+        try:
+            pc.select(cl=True)
+            if self.geosets:
+                conf = getConf()
+                conf['start_time'] = self.startFrame
+                conf['end_time'] = self.endFrame
+                conf['cache_dir'] = osp.join(self.tempPath, 'cache').replace('\\', '/')
+                command =  'doCreateGeometryCache3 {version} {{ "{time_range_mode}", "{start_time}", "{end_time}", "{cache_file_dist}", "{refresh_during_caching}", "{cache_dir}", "{cache_per_geo}", "{cache_name}", "{cache_name_as_prefix}", "{action_to_perform}", "{force_save}", "{simulation_rate}", "{sample_multiplier}", "{inherit_modf_from_cache}", "{store_doubles_as_float}", "{cache_format}", "{worldSpace}"}};'.format(**conf)
+                meshes = self.makeMeshes()
+                pc.select(meshes)
+                pc.Mel.eval(command)
+                pc.delete(meshes)
+        except Exception as ex:
+            return str(ex)
     
     def makeMeshes(self):
         errors = []
         combinedMeshes = []
-        for geoset in [pc.PyNode(gs) for gs in self.geosets]:
+        for geoset in [pc.PyNode(gs) for gs, val in self.geosets.items() if val]:
             meshes = [shape
                       for transform in geoset.dsm.inputs()
                       for shape in transform.getShapes(type = "mesh",
@@ -218,8 +225,8 @@ class Shot(object):
     
     def exportPreview(self):
         if not self.preview: return
-        for layer, val in self.displayLayers:
-            layer.visibility.set(val)
+        for layer, val in self.displayLayers.items():
+            pc.PyNode(layer).visibility.set(int(val))
         try:
             if self.hdPreview:
                 self.playblast((1280, 720))
@@ -230,6 +237,7 @@ class Shot(object):
                 pass
         except Exception as ex:
             return str(ex)
+        pprint(getDisplayLayerState())
 
     def playblast(self, resolution, hd=False):
         try:
@@ -266,12 +274,16 @@ class Shot(object):
                     cons = pc.ls(type=pc.nt.ParentConstraint)[0]
                 pc.select(cl=True)
                 pc.select(duplicate_cam)
-                pc.mel.eval('bakeResults -simulation true -t "%s:%s" -sampleBy 1 -disableImplicitControl true -preserveOutsideKeys true -sparseAnimCurveBake false -removeBakedAttributeFromLayer false -removeBakedAnimFromLayer false -bakeOnOverrideLayer false -minimizeRotation true -controlPoints false -shape true {\"%s\"};'%(self.plItem.inFrame, self.plItem.outFrame, duplicate_cam.name()))
+                pc.mel.eval('bakeResults -simulation true -t "%s:%s" -sampleBy 1 -disableImplicitControl true -preserveOutsideKeys true -sparseAnimCurveBake false -removeBakedAttributeFromLayer false -removeBakedAnimFromLayer false -bakeOnOverrideLayer false -minimizeRotation true -controlPoints false -shape true {\"%s\"};'%(self.startFrame, self.endFrame, duplicate_cam.name()))
                 pc.delete(cons)
                 name = self.getCameraNiceName()
-                name2 = imaya.getNiceName(orig_cam.firstParent().name())
+                try:
+                    name2 = imaya.getNiceName(orig_cam.firstParent().name())
+                except: name2 = ''
                 pc.rename(orig_cam, 'temp_cam_name_from_multiShotExport')
-                pc.rename(orig_cam.firstParent(), 'temp_group_name_from_multiShotExport')
+                try:
+                    pc.rename(orig_cam.firstParent(), 'temp_group_name_from_multiShotExport')
+                except: pass
                 pc.rename(duplicate_cam, name)
                 for node in pc.listConnections(orig_cam.getShape()):
                     if isinstance(node, pc.nt.AnimCurve):
@@ -294,22 +306,65 @@ class Shot(object):
                               pr = False)
             if self.nukeCamera:
                 pc.exportSelected(osp.join(path, self.getCameraNiceName()).replace('\\', '/'),
-                                  force=True, options="v=0;", typ="FBX export", pr=True)
+                                  force=True, options="v=0;", typ="FBX export", pr=False)
             if self.bakeCamera:
                 pc.delete(duplicate_cam)
                 pc.rename(orig_cam, name)
-                pc.rename(orig_cam.firstParent(), name2)
+                if name2:
+                    pc.rename(orig_cam.firstParent(), name2)
         except Exception as ex:
             return str(ex)
     
-def makeSetsUniqueName():
-    '''Create an attribute on geo sets to set a unique name if the sets are duplicate'''
-    pass
+    def getAnimatedTextures(self):
+        ''' Use the conf to find texture attributes to identify texture
+        attributes in the present scene/shot '''
+        conf = getConf()
+        texture_attrs = []
+        for key, attrs in conf['texture_export_data']:
+            for obj in [pc.PyNode(gs) for gs in self.geosets]:
+                if re.match( key, obj.name() ):
+                    name = obj.name()
+                    namespace = ':'.join(name.split(':')[:-1])
+                    for attr in attrs:
+                        nombre = namespace + '.' + attr
+                        attr = pc.Attribute(namespace + ':' + attr)
+                        texture_attrs.append((nombre, attr))
+        return texture_attrs
+
+    def exportAnimatedTextures(self):
+        ''' bake export animated textures from the scene '''
+        try:
+            conf = getConf()
+            if not self.geosets:
+                return False
+            animatedTextures = self.getAnimatedTextures()
+            if not animatedTextures:
+                return False
+            tempFilePath = osp.join(self.tempPath, 'tex')
+            if osp.exists(tempFilePath):
+                shutil.rmtree(tempFilePath)
+            os.mkdir(tempFilePath)
+            start_time = int(self._item.getInFrame())
+            end_time = int(self._item.getOutFrame())
+            rx = conf['texture_resX']
+            ry = conf['texture_resY']
+    
+            for curtime in range(start_time, end_time+1):
+                num = '%04d'%curtime
+                pc.currentTime(curtime, e=True)
+    
+                for name, attr in animatedTextures:
+                    fileImageName = osp.join(tempFilePath,
+                            '.'.join([name, num, 'png']))
+                    newobj = pc.convertSolidTx(attr, samplePlane=True, rx=rx, ry=ry,
+                            fil='png', fileImageName=fileImageName)
+                    pc.delete(newobj)
+        except Exception as ex:
+            return str(ex)
 
 def clearHomeDirectory():
     for phile in os.listdir(tempLocation):
         path = osp.join(tempLocation, phile)
-        print 'removing %s'%path
         if osp.isdir(path):
             shutil.rmtree(path)
         else:
@@ -345,3 +400,14 @@ def getConf():
 def getGeoSets():
     return [geoset for geoset in pc.ls(exactType=pc.nt.ObjectSet)
             if geoset.name().lower().endswith('_geo_set')]
+    
+def getDisplayLayerState():
+    return {layer: layer.visibility.get() for layer in imaya.getDisplayLayers()}
+
+def restoreDisplayLayerState(state):
+    for layer, val in state.items():
+        layer.visibility.set(int(val))
+
+def getProjectContext():
+    return (imaya.getFileInfo(utils.projectKey), imaya.getFileInfo(utils.episodeKey),
+            imaya.getFileInfo(utils.sequenceKey))

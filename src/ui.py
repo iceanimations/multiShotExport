@@ -20,6 +20,8 @@ reload(appUsageApp)
 reload(tc)
 reload(be)
 
+from pprint import pprint
+
 tempLocation = osp.join(osp.expanduser('~'), 'multiShotExport')
 rootPath = qutil.dirname(__file__, 2)
 uiPath = osp.join(rootPath, 'ui')
@@ -58,10 +60,8 @@ class ShotExporter(Form1, Base1, cui.TacticUiBase):
         self.horizontalLayout_2.insertWidget(2, self.shotBox)
         
         self.toggleCollapseButton.setIcon(QIcon(osp.join(iconPath, 'ic_toggle_collapse')))
-        
-        #pro = qutil.getOptionVar(tc.projectKey)
-        #ep = qutil.getOptionVar(tc.episodeKey)
-        #self.setContext(pro, ep, None)
+
+        self.setContext(*be.getProjectContext())
         
         appUsageApp.updateDatabase('shot_subm')
         
@@ -121,14 +121,12 @@ class ShotExporter(Form1, Base1, cui.TacticUiBase):
     def showMessage(self, **kwargs):
         return cui.showMessage(self, __title__, **kwargs)
         
-    def closeEvent(self, event):
-        self.deleteLater()
-        
     def getSelectedShots(self):
         return [item.shot for item in self.items if item.getTitle() in self.shotBox.getSelectedItems()]
     
     def export(self):
         errors = {}
+#         try:
         try:
             be.clearHomeDirectory()
         except Exception as ex:
@@ -137,6 +135,12 @@ class ShotExporter(Form1, Base1, cui.TacticUiBase):
         for shot in self.getSelectedShots():
             err = shot.export()
             if err: errors[shot.cameraName] = err
+        if errors:
+            self.showMessage(msg='Errors occurred while exporting Shots',
+                             details=qutil.dictionaryToDetails(errors),
+                             icon=QMessageBox.Critical)
+#         except Exception as ex:
+#             self.showMessage(msg=str(ex), icon=QMessageBox.Critical)
 
 
 Form2, Base2 = uic.loadUiType(osp.join(uiPath, 'item.ui'))
@@ -175,6 +179,8 @@ class Item(Form2, Base2):
         self.fullHdButton.clicked.connect(self.handleFullHdButton)
         self.jpgButton.clicked.connect(self.handlJpgButton)
         self.switchButton.clicked.connect(self.switchToMe)
+        
+        self.splitter.setSizes([(self.width() * 40) / 100, (self.width() * 40) / 100, (self.width() * 20) / 100])
         
     def toggleCacheSelectAllButton(self):
         # Check the Select All button is all the asset buttons get selected
@@ -259,10 +265,10 @@ class Item(Form2, Base2):
         for btn in self.geosetButton:
             btn.delteLater()
         del self.geosetButton[:]
-        for asset, val in self.shot.assets.items():
+        for asset, val in self.shot.geosets.items():
             btn = QCheckBox(asset)
-            btn.toggled.connect(self.toggleCacheSelectAllButton)
             btn.setChecked(val)
+            btn.toggled.connect(self.toggleCacheSelectAllButton)
             self.geosetButton.append(btn)
             self.assetLayout.addWidget(btn)
         # populate the display layer buttons
@@ -271,8 +277,8 @@ class Item(Form2, Base2):
         del self.displayLayerButtons[:]
         for layer, val in self.shot.displayLayers.items():
             btn = QCheckBox(layer)
-            btn.toggled.connect(self.togglePreviewSelectAllButton)
             btn.setChecked(val)
+            btn.toggled.connect(self.togglePreviewSelectAllButton)
             self.displayLayerButtons.append(btn)
             self.layerLayout.addWidget(btn)
     
