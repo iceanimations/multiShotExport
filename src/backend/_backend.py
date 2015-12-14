@@ -23,7 +23,7 @@ reload(fillinout)
 
 from pprint import pprint
 
-# create a directory to temporarily export the files 
+# create a directory to temporarily export the files
 tempLocation = osp.join(osp.expanduser('~'), 'multiShotExport')
 if not osp.exists(tempLocation):
     os.mkdir(tempLocation)
@@ -178,6 +178,11 @@ class Shot(object):
         if err: errors.append(err)
         err = self.exportAnimatedTextures()
         if err: errors.append(err)
+        # upload to TACTIC
+        self.parentWin.setBusy()
+        err = tc.uploadShotToTactic(self.tempPath)
+        self.parentWin.releaseBusy()
+        if err: errors.append(err)
         return errors
     
     def exportCache(self):
@@ -224,6 +229,7 @@ class Shot(object):
         return combinedMeshes
     
     def exportPreview(self):
+        shotInfo = {} #TODO: write the shot info on the preview
         if not self.preview: return
         for layer, val in self.displayLayers.items():
             pc.PyNode(layer).visibility.set(int(val))
@@ -237,18 +243,18 @@ class Shot(object):
                 pass
         except Exception as ex:
             return str(ex)
-        pprint(getDisplayLayerState())
 
     def playblast(self, resolution, hd=False):
         try:
             audio = pc.ls(type='audio')[0]
         except IndexError:
             audio = ''
+        path = osp.join(self.tempPath, 'preview')
         if hd:
-            path = osp.join(self.tempPath, 'preview', 'HD')
+            name = self.getCameraNiceName() + '_hd'
         else:
-            path = osp.join(self.tempPath, 'preview')
-        pc.playblast(f=osp.join(path, self.getCameraNiceName()),
+            name = self.getCameraNiceName()
+        pc.playblast(f=osp.join(path, name),
                      format='qt', fo=1, st=self.startFrame, et=self.endFrame,
                      s=audio, sequenceTime=0, clearCache=1, viewer=0,
                      showOrnaments=1, fp=4, percent=100, compression="H.264",
@@ -306,7 +312,12 @@ class Shot(object):
                               pr = False)
             if self.nukeCamera:
                 pc.exportSelected(osp.join(path, self.getCameraNiceName()).replace('\\', '/'),
-                                  force=True, options="v=0;", typ="FBX export", pr=False)
+                                  force=True, options="v=0;", typ="FBX export", pr=False,
+                                  constraints=False,
+                                  shader=False,
+                                  channels=True,
+                                  constructionHistory=False,
+                                  expressions=True)
             if self.bakeCamera:
                 pc.delete(duplicate_cam)
                 pc.rename(orig_cam, name)
