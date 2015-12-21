@@ -345,12 +345,7 @@ class Shot(object):
                               pr = False)
             if self.nukeCamera:
                 pc.exportSelected(osp.join(path, self.getCameraNiceName()).replace('\\', '/'),
-                                  force=True, options="v=0;", typ="FBX export", pr=False,
-                                  constraints=False,
-                                  shader=False,
-                                  channels=True,
-                                  constructionHistory=False,
-                                  expressions=True)
+                                  force=True, options="v=0;", typ="FBX export", pr=False)
             if self.bakeCamera:
                 pc.delete(duplicate_cam)
                 pc.rename(orig_cam, name)
