@@ -7,6 +7,8 @@ from createLayout.src import utilities as utils
 import pymel.core as pc
 import tacticCalls as tc
 import os.path as osp
+from datetime import datetime
+import subprocess
 import fillinout
 import shutil
 import iutil
@@ -26,7 +28,7 @@ from pprint import pprint
 # create a directory to temporarily export the files
 tempLocation = osp.join(osp.expanduser('~'), 'multiShotExport')
 if not osp.exists(tempLocation):
-    os.mkdir(tempLocation)
+    os.mkdir(tempLocation) 
 
 class Shot(object):
     def __init__(self, parent=None, shot=None):
@@ -84,11 +86,6 @@ class Shot(object):
         rawData = pc.PyNode(self.cameraName).mseData.get()
         if rawData:
             data = json.loads(rawData)
-        # create the shot directory in user home
-        self.tempPath = osp.join(tempLocation, self.getCameraNiceName())
-        if not osp.exists(self.tempPath):
-            os.mkdir(self.tempPath)
-
         # set the frame range
         frameRange, err = tc.getFrameRange(self.shot)
         if frameRange:
@@ -166,8 +163,14 @@ class Shot(object):
     
     def export(self):
         if not self.cameraName: return
+        # create the shot directory in user home
+        self.tempPath = osp.join(tempLocation, self.getCameraNiceName())
+        if not osp.exists(self.tempPath):
+            os.mkdir(self.tempPath)
         errors = []
         self.switchToMe()
+        hideFaceUi()
+        hideShowCurves(True)
         err = self.exportCamera()
         if err: errors.append(err)
         state = getDisplayLayerState()
@@ -183,6 +186,8 @@ class Shot(object):
         err = tc.uploadShotToTactic(self.tempPath)
         self.parentWin.releaseBusy()
         if err: errors.append(err)
+        showFaceUi()
+        hideShowCurves(False)
         return errors
     
     def exportCache(self):
@@ -229,18 +234,46 @@ class Shot(object):
         return combinedMeshes
     
     def exportPreview(self):
-        shotInfo = {} #TODO: write the shot info on the preview
         if not self.preview: return
+        jpgPath = osp.join(self.tempPath, 'JPG')
+        if not osp.exists(jpgPath): os.mkdir(jpgPath)
+        jpgPath = osp.join(jpgPath, self.getCameraNiceName()+'.%05d.jpg')
         for layer, val in self.displayLayers.items():
             pc.PyNode(layer).visibility.set(int(val))
         try:
             if self.hdPreview:
-                self.playblast((1280, 720))
+                path = self.playblast((1280, 720)) +'.mov'
+                # convert video preview to jpgs
+                if self.startFrame != 0:
+                    startFrame = '-start_number %s '%self.startFrame
+                else: startFrame = ''
+                subprocess.call('\"C:\\Program Files\\ImageMagick-6.9.1-Q8\\ffmpeg.exe\" -i %s %s-q:v 2 %s'%(osp.normpath(path), startFrame, osp.normpath(jpgPath)), shell=True)
+                # rename the files when self.frame == 0
+                frameRange = list(reversed(range(self.startFrame, self.endFrame + 1)))
+                if not startFrame:
+                    for image in sorted(os.listdir(osp.dirname(jpgPath))):
+                        newName = re.sub('\.\d{5}\.', '.'+ str(frameRange.pop()).zfill(5) +'.', image)
+                        imagePath = osp.join(osp.dirname(jpgPath), newName)
+                        os.rename(osp.join(osp.dirname(jpgPath), image), imagePath)
+                # add info to the jpgs
+                cmd = '\"C:\\Program Files\\ImageMagick-6.9.1-Q8\\convert.exe\"'
+                username = getUsername()
+                cameraName = self.getCameraNiceName()
+                time = getDateTime()
+                jpgPath = osp.dirname(jpgPath)
+                for image in sorted(os.listdir(jpgPath)):
+                    #newName = re.sub('\.\d{5}\.', '.'+ str(frameRange.pop()).zfill(5) +'.', image)
+                    imagePath = osp.join(jpgPath, image)
+                    #os.rename(osp.join(jpgPath, image), imagePath)
+                    subprocess.call(cmd +' %s -undercolor #00000060 -pointsize 35 -channel RGBA -fill white -draw "text 20,30 %s" -draw "text 500,30 %s" -draw "text 1050,30 %s" -draw "text 450,700 %s" %s'%(imagePath, username, cameraName, 'Frame_'+ image.split('.')[1], 'Time_'+ time, imagePath), shell=True)
+                # convert labled jpgs to .mov
+                movPath = osp.join(self.tempPath, 'preview', self.getCameraNiceName() +'.mov')
+                os.remove(movPath)
+                subprocess.call('\"C:\\Program Files\\ImageMagick-6.9.1-Q8\\ffmpeg.exe\" -start_number '+ str(self.startFrame) +' -i '+ osp.join(jpgPath, self.getCameraNiceName() + '.%05d.jpg') +' -c:v libx264 '+ movPath, shell=True)
             if self.fullHdPreview:
                 self.playblast((1920, 1080), hd=True)
-            if self.jpgPreview:
-                #TODO: Add the code to export preview as jpg sequence
-                pass
+            if not self.jpgPreview:
+                shutil.rmtree(jpgPath)
         except Exception as ex:
             return str(ex)
 
@@ -254,12 +287,12 @@ class Shot(object):
             name = self.getCameraNiceName() + '_hd'
         else:
             name = self.getCameraNiceName()
-        pc.playblast(f=osp.join(path, name),
-                     format='qt', fo=1, st=self.startFrame, et=self.endFrame,
-                     s=audio, sequenceTime=0, clearCache=1, viewer=0,
-                     showOrnaments=1, fp=4, percent=100, compression="H.264",
-                     quality=100, widthHeight=resolution,
-                     offScreen=1, orn=0)
+        return pc.playblast(f=osp.join(path, name),
+                            format='qt', fo=1, st=self.startFrame, et=self.endFrame,
+                            s=audio, sequenceTime=0, clearCache=1, viewer=0,
+                            showOrnaments=1, fp=4, percent=100, compression="H.264",
+                            quality=100, widthHeight=resolution,
+                            offScreen=1, orn=0)
     
     def exportCamera(self):
         if not self.camera: return
@@ -411,7 +444,7 @@ def getConf():
 def getGeoSets():
     return [geoset for geoset in pc.ls(exactType=pc.nt.ObjectSet)
             if geoset.name().lower().endswith('_geo_set')]
-    
+
 def getDisplayLayerState():
     return {layer: layer.visibility.get() for layer in imaya.getDisplayLayers()}
 
@@ -422,3 +455,33 @@ def restoreDisplayLayerState(state):
 def getProjectContext():
     return (imaya.getFileInfo(utils.projectKey), imaya.getFileInfo(utils.episodeKey),
             imaya.getFileInfo(utils.sequenceKey))
+
+def getUsername():
+    return os.environ['USERNAME']
+
+def getDateTime():
+    return str(datetime.now()).split('.')[0].replace('-', '/').replace(' ', '_').replace(':', '-')
+
+def hideFaceUi():
+    sel = pc.ls(sl=True)
+    pc.select(pc.ls(regex='(?i).*:?UI_grp'))
+    pc.Mel.eval('HideSelectedObjects')
+    pc.select(sel)
+    
+def showFaceUi():
+    sel = pc.ls(sl=True)
+    pc.select(pc.ls(regex='(?i).*:?UI_grp'))
+    pc.showHidden(b=True)
+    pc.select(sel)
+    
+def hideShowCurves(flag):
+    sel = pc.ls(sl=True)
+    try:
+        if flag:
+            pc.select(pc.ls(type=pc.nt.NurbsCurve))
+            pc.Mel.eval('HideSelectedObjects')
+        else:
+            pc.select(pc.ls(type=pc.nt.NurbsCurve))
+            pc.showHidden(b=True)
+    except: pass
+    pc.select(sel)

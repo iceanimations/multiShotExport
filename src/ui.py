@@ -244,7 +244,7 @@ class Item(Form2, Base2):
         
     def update(self, shot=None):
         if shot: self.shot = shot
-        if self.shot.startFrame and self.shot.endFrame:
+        if self.shot.startFrame is not None and self.shot.endFrame is not None:
             self.frLabel.setText('(%s - %s)'%(self.shot.startFrame, self.shot.endFrame))
         self.cacheButton.setChecked(self.shot.cache)
         self.previewButton.setChecked(self.shot.preview)
