@@ -101,7 +101,7 @@
          <x>0</x>
          <y>0</y>
          <width>779</width>
-         <height>558</height>
+         <height>531</height>
         </rect>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_3">
@@ -134,6 +134,13 @@
         </item>
        </layout>
       </widget>
+     </widget>
+    </item>
+    <item>
+     <widget class="QProgressBar" name="progressBar">
+      <property name="value">
+       <number>24</number>
+      </property>
      </widget>
     </item>
     <item>

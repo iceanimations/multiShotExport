@@ -62,8 +62,33 @@ class ShotExporter(Form1, Base1, cui.TacticUiBase):
         self.toggleCollapseButton.setIcon(QIcon(osp.join(iconPath, 'ic_toggle_collapse')))
 
         self.setContext(*be.getProjectContext())
+        self.progressBar.hide()
         
         appUsageApp.updateDatabase('shot_subm')
+    
+    def setStatus(self, msg):
+        self.statusBar().showMessage(msg)
+        qApp.processEvents()
+        
+    def clearStatus(self):
+        self.statusBar().clearMessage()
+        qApp.processEvents()
+        
+    def showProgressBar(self, m):
+        self.progressBar.setValue(0)
+        self.progressBar.setMaximum(m)
+        self.progressBar.show()
+        qApp.processEvents()
+        
+    def updateProgressBar(self, val):
+        self.progressBar.setValue(val)
+        qApp.processEvents()
+        
+    def hideProgressBar(self):
+        self.progressBar.setMaximum(0)
+        self.progressBar.setValue(0)
+        self.progressBar.hide()
+        qApp.processEvents()
         
     def setSatus(self, msg, timeout=3000):
         self.statusBar().showMessage(msg, timeout)
@@ -126,21 +151,29 @@ class ShotExporter(Form1, Base1, cui.TacticUiBase):
     
     def export(self):
         errors = {}
-#         try:
         try:
-            be.clearHomeDirectory()
+            self.setBusy()
+            try:
+                be.clearHomeDirectory()
+            except Exception as ex:
+                self.showMessage(msg=str(ex), icon=QMessageBox.Critical)
+                return
+            shots = self.getSelectedShots()
+            self.showProgressBar(len(shots))
+            for i, shot in enumerate(shots):
+                err = shot.export()
+                if err: errors[shot.cameraName] = err
+                self.updateProgressBar(i + 1)
+            if errors:
+                self.showMessage(msg='Errors occurred while exporting Shots',
+                                 details=qutil.dictionaryToDetails(errors),
+                                 icon=QMessageBox.Critical)
         except Exception as ex:
             self.showMessage(msg=str(ex), icon=QMessageBox.Critical)
-            return
-        for shot in self.getSelectedShots():
-            err = shot.export()
-            if err: errors[shot.cameraName] = err
-        if errors:
-            self.showMessage(msg='Errors occurred while exporting Shots',
-                             details=qutil.dictionaryToDetails(errors),
-                             icon=QMessageBox.Critical)
-#         except Exception as ex:
-#             self.showMessage(msg=str(ex), icon=QMessageBox.Critical)
+        finally:
+            self.releaseBusy()
+            self.hideProgressBar()
+            self.clearStatus()
 
 
 Form2, Base2 = uic.loadUiType(osp.join(uiPath, 'item.ui'))
