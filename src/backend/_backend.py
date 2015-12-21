@@ -28,7 +28,12 @@ from pprint import pprint
 # create a directory to temporarily export the files
 tempLocation = osp.join(osp.expanduser('~'), 'multiShotExport')
 if not osp.exists(tempLocation):
-    os.mkdir(tempLocation) 
+    os.mkdir(tempLocation)
+    
+mel = """
+source "R:/Pipe_Repo/Users/Qurban/Scripts/openMotion.mel";
+"""
+pc.mel.eval(mel) 
 
 class Shot(object):
     def __init__(self, parent=None, shot=None):
@@ -347,8 +352,7 @@ class Shot(object):
                               typ=imaya.getFileType(),
                               pr = False)
             if self.nukeCamera:
-                pc.exportSelected(osp.join(path, self.getCameraNiceName()).replace('\\', '/'),
-                                  force=True, options="v=0;", typ="FBX export", pr=False)
+                pc.mel.openMotion(osp.join(path, self.getCameraNiceName() +'.nk').replace('\\', '/'), '.txt')
             if self.bakeCamera:
                 pc.delete(duplicate_cam)
                 pc.rename(orig_cam, name)
