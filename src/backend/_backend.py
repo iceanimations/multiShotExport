@@ -216,7 +216,7 @@ class Shot(object):
         if err: errors.append(err)
         self.parentWin.setStatus('%s: Exporting Cache'%self.getCameraNiceName())
         err = self.exportCache()
-        if err: errors.append(err)
+        if err: errors.extend(err)
         self.parentWin.setStatus('%s: Exporting Animated Textures'%self.getCameraNiceName())
         err = self.exportAnimatedTextures()
         if err: errors.append(err)
@@ -229,6 +229,7 @@ class Shot(object):
         return errors
     
     def exportCache(self):
+        errors = []
         if not self.cache: return
         try:
             pc.select(cl=True)
@@ -238,12 +239,15 @@ class Shot(object):
                 conf['end_time'] = self.endFrame
                 conf['cache_dir'] = osp.join(self.tempPath, 'cache').replace('\\', '/')
                 command =  'doCreateGeometryCache3 {version} {{ "{time_range_mode}", "{start_time}", "{end_time}", "{cache_file_dist}", "{refresh_during_caching}", "{cache_dir}", "{cache_per_geo}", "{cache_name}", "{cache_name_as_prefix}", "{action_to_perform}", "{force_save}", "{simulation_rate}", "{sample_multiplier}", "{inherit_modf_from_cache}", "{store_doubles_as_float}", "{cache_format}", "{worldSpace}"}};'.format(**conf)
-                meshes = self.makeMeshes()
-                pc.select(meshes)
-                pc.Mel.eval(command)
-                pc.delete(meshes)
+                meshes, err = self.makeMeshes()
+                if err: errors.extend(err)
+                if meshes:
+                    pc.select(meshes)
+                    pc.Mel.eval(command)
+                    pc.delete(meshes)
         except Exception as ex:
-            return str(ex)
+            errors.append(str(ex))
+        return errors
     
     def makeMeshes(self):
         errors = []
@@ -269,7 +273,7 @@ class Shot(object):
                 meshes[i].outMesh >> polyUnite.inputPoly[i]
                 meshes[i].worldMatrix[0] >> polyUnite.inputMat[i]
             polyUnite.output >> combinedMesh.inMesh
-        return combinedMeshes
+        return combinedMeshes, errors
     
     def exportPreview(self):
         if not self.preview: return
