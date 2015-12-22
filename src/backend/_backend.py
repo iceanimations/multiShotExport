@@ -3,6 +3,7 @@ Created on Nov 24, 2015
 
 @author: qurban.ali
 '''
+from shot_subm.src.backend import findAllConnectedGeosets
 from createLayout.src import utilities as utils
 import pymel.core as pc
 import tacticCalls as tc
@@ -132,6 +133,35 @@ class Shot(object):
             for layer in imaya.getDisplayLayers():
                 self.displayLayers[layer.name()] = layer.visibility.get()
             self.bakeCamera = self.isCamBakeable()
+            
+    def addSelectedGeoSets(self):
+        geosets = findAllConnectedGeosets()
+        if geosets:
+            self.geosets.clear()
+            for geoset in getGeoSets():
+                if geoset in geosets:
+                    self.geosets[geoset.name()] = True
+                else:
+                    self.geosets[geoset.name()] = False
+            self.saveToScene()
+    
+    def appendSelectedGeoSets(self):
+        geosets = findAllConnectedGeosets()
+        if geosets:
+            for geoset in getGeoSets():
+                if geoset in geosets:
+                    if not self.geosets.get(geoset.name()):
+                        self.geosets[geoset.name()] = True
+            self.saveToScene()
+    
+    def removeSelectedGeoSets(self):
+        geosets = findAllConnectedGeosets()
+        if geosets:
+            for geoset in getGeoSets():
+                if geoset in geosets:
+                    if self.geosets.get(geoset.name()):
+                        self.geosets[geoset.name()] = False
+            self.saveToScene()
             
     def updateGeoSets(self, assets):
         self.geosets.clear()

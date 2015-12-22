@@ -199,6 +199,9 @@ class Item(Form2, Base2):
         self.iconLabel.setStyleSheet(self.style%osp.join(iconPath,
                                                          'ic_collapse.png').replace('\\', '/'))
         self.switchButton.setIcon(QIcon(osp.join(iconPath, 'ic_switch_camera.png')))
+        self.appendButton.setIcon(QIcon(osp.join(iconPath, 'ic_append_char.png')))
+        self.removeButton.setIcon(QIcon(osp.join(iconPath, 'ic_remove_char.png')))
+        self.addButton.setIcon(QIcon(osp.join(iconPath, 'ic_add_char.png')))
 
         self.titleFrame.mouseReleaseEvent = self.collapse
         self.cacheButton.clicked.connect(self.handleCacheButton)
@@ -212,8 +215,23 @@ class Item(Form2, Base2):
         self.fullHdButton.clicked.connect(self.handleFullHdButton)
         self.jpgButton.clicked.connect(self.handlJpgButton)
         self.switchButton.clicked.connect(self.switchToMe)
+        self.addButton.clicked.connect(self.addSelectedGeoSets)
+        self.appendButton.clicked.connect(self.appendSelectedGeoSets)
+        self.removeButton.clicked.connect(self.removeSelectedGeoSets)
         
         self.splitter.setSizes([(self.width() * 40) / 100, (self.width() * 40) / 100, (self.width() * 20) / 100])
+        
+    def addSelectedGeoSets(self):
+        self.shot.addSelectedGeoSets()
+        self.update()
+    
+    def appendSelectedGeoSets(self):
+        self.shot.appendSelectedGeoSets()
+        self.update()
+    
+    def removeSelectedGeoSets(self):
+        self.shot.removeSelectedGeoSets()
+        self.update()
         
     def toggleCacheSelectAllButton(self):
         # Check the Select All button is all the asset buttons get selected
@@ -296,7 +314,7 @@ class Item(Form2, Base2):
         
         # populate the asset buttons
         for btn in self.geosetButton:
-            btn.delteLater()
+            btn.deleteLater()
         del self.geosetButton[:]
         for asset, val in self.shot.geosets.items():
             btn = QCheckBox(asset)
@@ -306,7 +324,7 @@ class Item(Form2, Base2):
             self.assetLayout.addWidget(btn)
         # populate the display layer buttons
         for btn in self.displayLayerButtons:
-            btn.delteLater()
+            btn.deleteLater()
         del self.displayLayerButtons[:]
         for layer, val in self.shot.displayLayers.items():
             btn = QCheckBox(layer)
