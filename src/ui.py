@@ -27,6 +27,7 @@ rootPath = qutil.dirname(__file__, 2)
 uiPath = osp.join(rootPath, 'ui')
 iconPath = osp.join(rootPath, 'icons')
 __title__ = 'Multi Shot Export'
+directoryKey = 'multiShotExport_Directory_key'
 
 Form1, Base1 = uic.loadUiType(osp.join(uiPath, 'main.ui'))
 class ShotExporter(Form1, Base1, cui.TacticUiBase):
@@ -42,6 +43,9 @@ class ShotExporter(Form1, Base1, cui.TacticUiBase):
 
         self.items = []
         self.collapsed = True
+        directory = qutil.getOptionVar(directoryKey)
+        self.lastDirectory = directory if directory else ''
+        self.directoryBox.setText(self.lastDirectory)
         
         self.populateProjects()
         self.label.hide()
@@ -53,6 +57,8 @@ class ShotExporter(Form1, Base1, cui.TacticUiBase):
         self.seqBox.currentIndexChanged[str].connect(self.populateShots)
         self.exportButton.clicked.connect(self.export)
         self.toggleCollapseButton.clicked.connect(self.toggleItems)
+        self.browseButton.clicked.connect(self.setDirectory)
+        self.directoryBox.textChanged.connect(self.handleDirectoryChange)
         
         self.shotBox = cui.MultiSelectComboBox(self, '--Shots--')
         self.shotBox.setStyleSheet('QPushButton{min-width: 100px;}')
@@ -65,6 +71,15 @@ class ShotExporter(Form1, Base1, cui.TacticUiBase):
         self.progressBar.hide()
         
         appUsageApp.updateDatabase('shot_subm')
+        
+    def setDirectory(self):
+        directory = QFileDialog.getExistingDirectory(self, __title__, self.lastDirectory)
+        if directory:
+            self.directoryBox.setText(directory)
+            self.lastDirectory = directory
+    
+    def handleDirectoryChange(self, text):
+        qutil.addOptionVar(directoryKey, text)
     
     def setStatus(self, msg):
         self.statusBar().showMessage(msg)
@@ -149,7 +164,17 @@ class ShotExporter(Form1, Base1, cui.TacticUiBase):
     def getSelectedShots(self):
         return [item.shot for item in self.items if item.getTitle() in self.shotBox.getSelectedItems()]
     
+    def isDirectory(self):
+        return self.addDirectoryButton.isChecked()
+    
+    def getDirectory(self):
+        return self.directoryBox.text()
+    
     def export(self):
+        if self.isDirectory():
+            if not osp.exists(self.getDirectory()):
+                self.showMessage(msg='The system could not find the path specified\n%s'%self.getDirectory())
+                return
         errors = {}
         try:
             self.setBusy()

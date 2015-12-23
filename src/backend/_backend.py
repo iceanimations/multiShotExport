@@ -206,27 +206,47 @@ class Shot(object):
         self.switchToMe()
         hideFaceUi()
         hideShowCurves(True)
-        self.parentWin.setStatus('%s: Exporting Camera'%self.getCameraNiceName())
+        if self.parentWin:
+            self.parentWin.setStatus('%s: Exporting Camera'%self.getCameraNiceName())
         err = self.exportCamera()
         if err: errors.append(err)
         state = getDisplayLayerState()
-        self.parentWin.setStatus('%s: Exporting Preview'%self.getCameraNiceName())
+        if self.parentWin:
+            self.parentWin.setStatus('%s: Exporting Preview'%self.getCameraNiceName())
         err = self.exportPreview()
         restoreDisplayLayerState(state)
         if err: errors.append(err)
-        self.parentWin.setStatus('%s: Exporting Cache'%self.getCameraNiceName())
+        if self.parentWin:
+            self.parentWin.setStatus('%s: Exporting Cache'%self.getCameraNiceName())
         err = self.exportCache()
         if err: errors.extend(err)
-        self.parentWin.setStatus('%s: Exporting Animated Textures'%self.getCameraNiceName())
+        if self.parentWin:
+            self.parentWin.setStatus('%s: Exporting Animated Textures'%self.getCameraNiceName())
         err = self.exportAnimatedTextures()
         if err: errors.append(err)
         # upload to TACTIC
-        self.parentWin.setStatus('%s: Saving to TACTIC'%self.getCameraNiceName())
-        err = tc.uploadShotToTactic(self.tempPath)
-        if err: errors.append(err)
+        if self.parentWin:
+            self.parentWin.setStatus('%s: Saving to TACTIC'%self.getCameraNiceName())
+        if self.parentWin:
+            if self.parentWin.isDirectory():
+                self.parentWin.setStatus('%s: Saving to %s'%(self.getCameraNiceName(), self.parentWin.getDirectory()))
+                err = self.saveShotsToDirectory()
+                if err: errors.append(err)
+            else:
+                err = tc.uploadShotToTactic(self.tempPath)
+                if err: errors.append(err)
+        else:
+            err = tc.uploadShotToTactic(self.tempPath)
+            if err: errors.append(err)
         showFaceUi()
         hideShowCurves(False)
         return errors
+    
+    def saveShotsToDirectory(self):
+        try:
+            shutil.copytree(self.tempPath, osp.join(self.parentWin.getDirectory(), self.getCameraNiceName()))
+        except Exception as ex:
+            return str(ex)
     
     def exportCache(self):
         errors = []
