@@ -164,6 +164,12 @@ class ShotExporter(Form1, Base1, cui.TacticUiBase):
     def getSelectedShots(self):
         return [item.shot for item in self.items if item.getTitle() in self.shotBox.getSelectedItems()]
     
+    def getSeq(self):
+        seq = self.seqBox.currentText()
+        if seq == '--Select Sequence--':
+            seq = ''
+        return seq
+    
     def isDirectory(self):
         return self.addDirectoryButton.isChecked()
     
@@ -175,6 +181,9 @@ class ShotExporter(Form1, Base1, cui.TacticUiBase):
             if not osp.exists(self.getDirectory()):
                 self.showMessage(msg='The system could not find the path specified\n%s'%self.getDirectory())
                 return
+        if not be.sceneSaved():
+            self.showMessage(msg='Scene contains unsaved changes, save to proceed')
+            return
         errors = {}
         try:
             self.setBusy()
@@ -184,11 +193,13 @@ class ShotExporter(Form1, Base1, cui.TacticUiBase):
                 self.showMessage(msg=str(ex), icon=QMessageBox.Critical)
                 return
             shots = self.getSelectedShots()
-            self.showProgressBar(len(shots))
-            for i, shot in enumerate(shots):
-                err = shot.export()
-                if err: errors[shot.cameraName] = err
-                self.updateProgressBar(i + 1)
+            if shots:
+                self.showProgressBar(len(shots))
+                for i, shot in enumerate(shots):
+                    err = shot.export()
+                    if err: errors[shot.cameraName] = err
+                    self.updateProgressBar(i + 1)
+                be.backupMayaFile(self.getSeq())
             if errors:
                 self.showMessage(msg='Errors occurred while exporting Shots',
                                  details=qutil.dictionaryToDetails(errors),

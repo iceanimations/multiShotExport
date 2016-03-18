@@ -6,6 +6,7 @@ Created on Nov 24, 2015
 from shot_subm.src.backend import findAllConnectedGeosets
 from createLayout.src import utilities as utils
 import pymel.core as pc
+import maya.cmds as cmds
 import tacticCalls as tc
 import os.path as osp
 from datetime import datetime
@@ -461,6 +462,12 @@ class Shot(object):
                     pc.delete(newobj)
         except Exception as ex:
             return str(ex)
+        
+def backupMayaFile(seq):
+    tc.checkin(seq, 'ANIMATION/MSE', '')
+
+def sceneSaved():
+    return cmds.file(q=True, modified=True)
 
 def clearHomeDirectory():
     for phile in os.listdir(tempLocation):
