@@ -336,8 +336,7 @@ class Shot(object):
             if self.fullHdPreview:
                 self.playblast((1920, 1080), hd=True)
             if not self.jpgPreview:
-                #shutil.rmtree(jpgPath)
-                pass
+                shutil.rmtree(jpgPath)
         except Exception as ex:
             return str(ex)
 
