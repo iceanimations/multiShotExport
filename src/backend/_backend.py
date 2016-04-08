@@ -361,6 +361,8 @@ class Shot(object):
         if not self.camera: return
         try:
             path = osp.join(self.tempPath, 'camera')
+            if not osp.exists(path):
+                os.mkdir(path)
             orig_cam = pc.PyNode(self.cameraName)
             pc.select(orig_cam)
             if self.bakeCamera:
