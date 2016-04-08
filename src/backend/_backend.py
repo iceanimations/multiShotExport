@@ -331,12 +331,13 @@ class Shot(object):
                     subprocess.call(cmd +' %s -undercolor #00000060 -pointsize 35 -channel RGBA -fill white -draw "text 20,30 %s" -draw "text 500,30 %s" -draw "text 1050,30 %s" -draw "text 450,700 %s" %s'%(imagePath, username, cameraName, 'Frame_'+ image.split('.')[1], 'Time_'+ time, imagePath), shell=True)
                 # convert labled jpgs to .mov
                 movPath = osp.join(self.tempPath, 'preview', self.getCameraNiceName() +'.mov')
-                os.remove(movPath)
+                #os.remove(movPath)
                 subprocess.call('\"C:\\Program Files\\ImageMagick-6.9.1-Q8\\ffmpeg.exe\" -start_number '+ str(self.startFrame) +' -i '+ osp.join(jpgPath, self.getCameraNiceName() + '.%05d.jpg') +' -c:v libx264 '+ movPath, shell=True)
             if self.fullHdPreview:
                 self.playblast((1920, 1080), hd=True)
             if not self.jpgPreview:
-                shutil.rmtree(jpgPath)
+                #shutil.rmtree(jpgPath)
+                pass
         except Exception as ex:
             return str(ex)
 
