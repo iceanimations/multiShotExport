@@ -305,7 +305,9 @@ class Shot(object):
             pc.PyNode(layer).visibility.set(int(val))
         overscan = pc.camera(self.cameraName, overscan=True, q=True)
         pc.camera(self.cameraName, e=True, overscan=1)
-        imgMgcPath = 'R:\\Pipe_Repo\\Users\\Qurban\\applications\\ImageMagick'
+        imgMgcPath = 'C:\\Program Files\\ImageMagick-6.9.1-Q8'
+        if not osp.exists(imgMgcPath):
+            imgMgcPath = 'R:\\Pipe_Repo\\Users\\Qurban\\applications\\ImageMagick'
         try:
             if self.hdPreview:
                 path = self.playblast((1280, 720)) +'.mov'
