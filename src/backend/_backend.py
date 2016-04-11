@@ -303,6 +303,8 @@ class Shot(object):
         jpgPath = osp.join(jpgPath, self.getCameraNiceName()+'.%05d.jpg')
         for layer, val in self.displayLayers.items():
             pc.PyNode(layer).visibility.set(int(val))
+        overscan = pc.camera(self.cameraName, overscan=True, q=True)
+        pc.camera(self.cameraName, e=True, overscan=1)
         imgMgcPath = 'R:\\Pipe_Repo\\Users\\Qurban\\applications\\ImageMagick'
         try:
             if self.hdPreview:
@@ -339,6 +341,8 @@ class Shot(object):
                 shutil.rmtree(jpgPath)
         except Exception as ex:
             return str(ex)
+        finally:
+            pc.camera(self.cameraName, e=True, overscan=overscan)
 
     def playblast(self, resolution, hd=False):
         try:
