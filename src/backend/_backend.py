@@ -303,6 +303,7 @@ class Shot(object):
         jpgPath = osp.join(jpgPath, self.getCameraNiceName()+'.%05d.jpg')
         for layer, val in self.displayLayers.items():
             pc.PyNode(layer).visibility.set(int(val))
+        imgMgcPath = 'R:\\Pipe_Repo\\Users\\Qurban\\applications\\ImageMagick'
         try:
             if self.hdPreview:
                 path = self.playblast((1280, 720)) +'.mov'
@@ -310,7 +311,7 @@ class Shot(object):
                 if self.startFrame != 0:
                     startFrame = '-start_number %s '%self.startFrame
                 else: startFrame = ''
-                subprocess.call('\"C:\\Program Files\\ImageMagick-6.9.1-Q8\\ffmpeg.exe\" -i %s %s-q:v 2 %s'%(osp.normpath(path), startFrame, osp.normpath(jpgPath)), shell=True)
+                subprocess.call(imgMgcPath + '\\ffmpeg.exe -i %s %s-q:v 2 %s'%(osp.normpath(path), startFrame, osp.normpath(jpgPath)), shell=True)
                 # rename the files when self.frame == 0
                 frameRange = list(reversed(range(self.startFrame, self.endFrame + 1)))
                 if not startFrame:
@@ -319,7 +320,6 @@ class Shot(object):
                         imagePath = osp.join(osp.dirname(jpgPath), newName)
                         os.rename(osp.join(osp.dirname(jpgPath), image), imagePath)
                 # add info to the jpgs
-                cmd = '\"C:\\Program Files\\ImageMagick-6.9.1-Q8\\convert.exe\"'
                 username = getUsername()
                 cameraName = self.getCameraNiceName()
                 time = getDateTime()
@@ -328,11 +328,11 @@ class Shot(object):
                     #newName = re.sub('\.\d{5}\.', '.'+ str(frameRange.pop()).zfill(5) +'.', image)
                     imagePath = osp.join(jpgPath, image)
                     #os.rename(osp.join(jpgPath, image), imagePath)
-                    subprocess.call(cmd +' %s -undercolor #00000060 -pointsize 35 -channel RGBA -fill white -draw "text 20,30 %s" -draw "text 500,30 %s" -draw "text 1050,30 %s" -draw "text 450,700 %s" %s'%(imagePath, username, cameraName, 'Frame_'+ image.split('.')[1], 'Time_'+ time, imagePath), shell=True)
+                    subprocess.call(imgMgcPath +'\\convert.exe %s -undercolor #00000060 -pointsize 35 -channel RGBA -fill white -draw "text 20,30 %s" -draw "text 500,30 %s" -draw "text 1050,30 %s" -draw "text 450,700 %s" %s'%(imagePath, username, cameraName, 'Frame_'+ image.split('.')[1], 'Time_'+ time, imagePath), shell=True)
                 # convert labled jpgs to .mov
                 movPath = osp.join(self.tempPath, 'preview', self.getCameraNiceName() +'.mov')
                 os.remove(movPath)
-                subprocess.call('\"C:\\Program Files\\ImageMagick-6.9.1-Q8\\ffmpeg.exe\" -start_number '+ str(self.startFrame) +' -i '+ osp.join(jpgPath, self.getCameraNiceName() + '.%05d.jpg') +' -c:v libx264 '+ movPath, shell=True)
+                subprocess.call(imgMgcPath + '\\ffmpeg.exe -start_number '+ str(self.startFrame) +' -i '+ osp.join(jpgPath, self.getCameraNiceName() + '.%05d.jpg') +' -c:v libx264 '+ movPath, shell=True)
             if self.fullHdPreview:
                 self.playblast((1920, 1080), hd=True)
             if not self.jpgPreview:
