@@ -13,6 +13,7 @@ import qutil
 import cui
 import appUsageApp
 import qtify_maya_window as qtfy
+import imaya
 
 reload(qutil)
 reload(cui)
@@ -178,12 +179,9 @@ class ShotExporter(Form1, Base1, cui.TacticUiBase):
     
     def export(self):
         if not osp.exists('C:\\Program Files\\ImageMagick-6.9.1-Q8'):
-            btn = self.showMessage(msg='Image Magick library is not installed on this system. It will take very long to export Previews without this library',
-                                   ques='Do you want to continue anyway?',
-                                   icon=QMessageBox.Warning,
-                                   btns=QMessageBox.Yes|QMessageBox.No)
-            if btn == QMessageBox.No:
-                return
+            self.showMessage(msg='Image Magick library is not installed on this system. Could not continue',
+                             icon=QMessageBox.Warning)
+            return
         if self.isDirectory():
             if not osp.exists(self.getDirectory()):
                 self.showMessage(msg='The system could not find the path specified\n%s'%self.getDirectory())
@@ -200,6 +198,7 @@ class ShotExporter(Form1, Base1, cui.TacticUiBase):
                 self.showMessage(msg=str(ex), icon=QMessageBox.Critical)
                 return
             shots = self.getSelectedShots()
+            imaya.toggleTextureMode(True)
             if shots:
                 self.showProgressBar(len(shots))
                 for i, shot in enumerate(shots):

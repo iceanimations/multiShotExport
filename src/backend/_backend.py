@@ -304,6 +304,8 @@ class Shot(object):
         for layer, val in self.displayLayers.items():
             pc.PyNode(layer).visibility.set(int(val))
         overscan = pc.camera(self.cameraName, overscan=True, q=True)
+        panZoomEnabled = pc.PyNode(self.cameraName).panZoomEnabled.get()
+        pc.PyNode(self.cameraName).panZoomEnabled.set(0)
         pc.camera(self.cameraName, e=True, overscan=1)
         imgMgcPath = 'C:\\Program Files\\ImageMagick-6.9.1-Q8'
         if not osp.exists(imgMgcPath):
@@ -315,7 +317,7 @@ class Shot(object):
                 if self.startFrame != 0:
                     startFrame = '-start_number %s '%self.startFrame
                 else: startFrame = ''
-                subprocess.call(imgMgcPath + '\\ffmpeg.exe -i %s %s-q:v 2 %s'%(osp.normpath(path), startFrame, osp.normpath(jpgPath)), shell=True)
+                subprocess.call('\"'+ osp.join(imgMgcPath, 'ffmpeg.exe') +'\" -i %s %s-q:v 2 %s'%(osp.normpath(path), startFrame, osp.normpath(jpgPath)), shell=True)
                 # rename the files when self.frame == 0
                 frameRange = list(reversed(range(self.startFrame, self.endFrame + 1)))
                 if not startFrame:
@@ -332,11 +334,11 @@ class Shot(object):
                     #newName = re.sub('\.\d{5}\.', '.'+ str(frameRange.pop()).zfill(5) +'.', image)
                     imagePath = osp.join(jpgPath, image)
                     #os.rename(osp.join(jpgPath, image), imagePath)
-                    subprocess.call(imgMgcPath +'\\convert.exe %s -undercolor #00000060 -pointsize 35 -channel RGBA -fill white -draw "text 20,30 %s" -draw "text 500,30 %s" -draw "text 1050,30 %s" -draw "text 450,700 %s" %s'%(imagePath, username, cameraName, 'Frame_'+ image.split('.')[1], 'Time_'+ time, imagePath), shell=True)
+                    subprocess.call('\"'+ osp.join(imgMgcPath, 'convert.exe') +'\" %s -undercolor #00000060 -pointsize 35 -channel RGBA -fill white -draw "text 20,30 %s" -draw "text 500,30 %s" -draw "text 1050,30 %s" -draw "text 450,700 %s" %s'%(imagePath, username, cameraName, 'Frame_'+ image.split('.')[1], 'Time_'+ time, imagePath), shell=True)
                 # convert labled jpgs to .mov
                 movPath = osp.join(self.tempPath, 'preview', self.getCameraNiceName() +'.mov')
                 os.remove(movPath)
-                subprocess.call(imgMgcPath + '\\ffmpeg.exe -start_number '+ str(self.startFrame) +' -i '+ osp.join(jpgPath, self.getCameraNiceName() + '.%05d.jpg') +' -c:v libx264 '+ movPath, shell=True)
+                subprocess.call('\"'+ osp.join(imgMgcPath, 'ffmpeg.exe') +'\" -start_number '+ str(self.startFrame) +' -i '+ osp.join(jpgPath, self.getCameraNiceName() + '.%05d.jpg') +' -c:v libx264 '+ movPath, shell=True)
             if self.fullHdPreview:
                 self.playblast((1920, 1080), hd=True)
             if not self.jpgPreview:
@@ -345,6 +347,7 @@ class Shot(object):
             return str(ex)
         finally:
             pc.camera(self.cameraName, e=True, overscan=overscan)
+            pc.PyNode(self.cameraName).panZoomEnabled.set(panZoomEnabled)
 
     def playblast(self, resolution, hd=False):
         try:
