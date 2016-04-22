@@ -337,8 +337,18 @@ class Shot(object):
                     subprocess.call('\"'+ osp.join(imgMgcPath, 'convert.exe') +'\" %s -undercolor #00000060 -pointsize 35 -channel RGBA -fill white -draw "text 20,30 %s" -draw "text 500,30 %s" -draw "text 1050,30 %s" -draw "text 450,700 %s" %s'%(imagePath, username, cameraName, 'Frame_'+ image.split('.')[1], 'Time_'+ time, imagePath), shell=True)
                 # convert labled jpgs to .mov
                 movPath = osp.join(self.tempPath, 'preview', self.getCameraNiceName() +'.mov')
+                # extract audio
+                audioPath = osp.join(osp.dirname(movPath), 'audio.wav')
+                subprocess.call('\"'+ osp.join(imgMgcPath, 'ffmpeg.exe') +'\" -i %s -vn -acodec copy %s'%(movPath, audioPath), shell=True)
                 os.remove(movPath)
+                # create mov file from jpgs
                 subprocess.call('\"'+ osp.join(imgMgcPath, 'ffmpeg.exe') +'\" -start_number '+ str(self.startFrame) +' -i '+ osp.join(jpgPath, self.getCameraNiceName() + '.%05d.jpg') +' -c:v libx264 '+ movPath, shell=True)
+                # add extracted audio
+                temp_hd = osp.join(osp.dirname(movPath), 'temp_hd.mov')
+                subprocess.call('\"'+ osp.join(imgMgcPath, 'ffmpeg.exe') +'\" -i %s -i %s -codec copy -shortest %s'%(movPath, audioPath, temp_hd), shell=True)
+                os.remove(movPath)
+                os.rename(temp_hd, movPath)
+                os.remove(audioPath)
             if self.fullHdPreview:
                 self.playblast((1920, 1080), hd=True)
             if not self.jpgPreview:
