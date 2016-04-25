@@ -541,11 +541,10 @@ def getConf():
     return conf
 
 def displaySmoothness(smooth=True):
-    sl = pc.ls(sl=True);
     pc.select([mesh for _set in getGeoSets() for mesh in _set.members()])
     imaya.displaySmoothness(smooth)
     pc.setAttr("hardwareRenderingGlobals.ssaoEnable", smooth)
-    pc.select(sl)
+    pc.select(cl=True)
 
 def getGeoSets():
     return [geoset for geoset in pc.ls(exactType=pc.nt.ObjectSet)
@@ -573,13 +572,13 @@ def hideFaceUi():
     pc.select(pc.ls(regex='(?i).*:?UI_grp'))
     pc.Mel.eval('HideSelectedObjects')
     pc.select(sel)
-    
+
 def showFaceUi():
     sel = pc.ls(sl=True)
     pc.select(pc.ls(regex='(?i).*:?UI_grp'))
     pc.showHidden(b=True)
     pc.select(sel)
-    
+
 def hideShowCurves(flag):
     sel = pc.ls(sl=True)
     try:
