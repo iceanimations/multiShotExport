@@ -14,6 +14,7 @@ import cui
 import appUsageApp
 import qtify_maya_window as qtfy
 import imaya
+import iutil
 
 reload(qutil)
 reload(cui)
@@ -260,8 +261,15 @@ class Item(Form2, Base2):
         self.addButton.clicked.connect(self.addSelectedGeoSets)
         self.appendButton.clicked.connect(self.appendSelectedGeoSets)
         self.removeButton.clicked.connect(self.removeSelectedGeoSets)
+        self.browseButton.clicked.connect(self.openLocation)
         
         self.splitter.setSizes([(self.width() * 40) / 100, (self.width() * 40) / 100, (self.width() * 20) / 100])
+        
+    def openLocation(self):
+        self.shot.openLocation()
+#             self.parentWin.showMessage(msg='Errors occurred while getting path from TACTIC',
+#                                        icon=QMessageBox.Critical,
+#                                        details=iutil.dictionaryToDetails(err))
         
     def addSelectedGeoSets(self):
         self.shot.addSelectedGeoSets()

@@ -58,6 +58,13 @@ class Shot(object):
 
         self.setup()
         self.saveToScene()
+        
+    def openLocation(self):
+        path, errors = tc.getShotPath(self.shot)
+        if errors:
+            pc.warning(str(errors))
+        path = osp.normpath(path)
+        subprocess.Popen('explorer %s'%path)
 
     def saveToScene(self):
         # save the settings of each shot on the camera attribute
