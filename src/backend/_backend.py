@@ -540,6 +540,12 @@ def getConf():
     conf["worldSpace"] = 1
     return conf
 
+def displaySmoothness(smooth=True):
+    sl = pc.ls(sl=True);
+    pc.select([mesh for _set in getGeoSets() for mesh in _set.members()])
+    imaya.displaySmoothness(smooth)
+    pc.select(sl)
+
 def getGeoSets():
     return [geoset for geoset in pc.ls(exactType=pc.nt.ObjectSet)
             if geoset.name().lower().endswith('_geo_set')]

@@ -200,6 +200,7 @@ class ShotExporter(Form1, Base1, cui.TacticUiBase):
                 return
             shots = self.getSelectedShots()
             imaya.toggleTextureMode(True)
+            be.displaySmoothness(True)
             if shots:
                 self.showProgressBar(len(shots))
                 for i, shot in enumerate(shots):
@@ -217,6 +218,7 @@ class ShotExporter(Form1, Base1, cui.TacticUiBase):
             self.releaseBusy()
             self.hideProgressBar()
             self.clearStatus()
+            be.displaySmoothness(False)
 
 
 Form2, Base2 = uic.loadUiType(osp.join(uiPath, 'item.ui'))
