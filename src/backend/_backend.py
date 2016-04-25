@@ -544,6 +544,7 @@ def displaySmoothness(smooth=True):
     sl = pc.ls(sl=True);
     pc.select([mesh for _set in getGeoSets() for mesh in _set.members()])
     imaya.displaySmoothness(smooth)
+    pc.setAttr("hardwareRenderingGlobals.ssaoEnable", smooth)
     pc.select(sl)
 
 def getGeoSets():
