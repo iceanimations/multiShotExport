@@ -495,7 +495,7 @@ class Shot(object):
 def backupMayaFile(seq):
     tc.checkin(seq, 'ANIMATION/MSE', '')
 
-def sceneSaved():
+def sceneModified():
     return cmds.file(q=True, modified=True)
 
 def clearHomeDirectory():

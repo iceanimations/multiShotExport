@@ -186,7 +186,7 @@ class ShotExporter(Form1, Base1, cui.TacticUiBase):
             if not osp.exists(self.getDirectory()):
                 self.showMessage(msg='The system could not find the path specified\n%s'%self.getDirectory())
                 return
-        if not be.sceneSaved():
+        if be.sceneModified():
             self.showMessage(msg='Scene contains unsaved changes, save to proceed')
             return
         errors = {}
