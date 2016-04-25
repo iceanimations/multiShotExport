@@ -345,9 +345,14 @@ class Shot(object):
                 subprocess.call('\"'+ osp.join(imgMgcPath, 'ffmpeg.exe') +'\" -start_number '+ str(self.startFrame) +' -i '+ osp.join(jpgPath, self.getCameraNiceName() + '.%05d.jpg') +' -c:v libx264 '+ movPath, shell=True)
                 # add extracted audio
                 temp_hd = osp.join(osp.dirname(movPath), 'temp_hd.mov')
+                temp_hd_2 = osp.join(osp.dirname(movPath), 'temp_hd_2.mov')
                 subprocess.call('\"'+ osp.join(imgMgcPath, 'ffmpeg.exe') +'\" -i %s -i %s -codec copy -shortest %s'%(movPath, audioPath, temp_hd), shell=True)
-                os.remove(movPath)
-                os.rename(temp_hd, movPath)
+                os.rename(movPath, temp_hd_2)
+                try:
+                    os.rename(temp_hd, movPath)
+                    os.remove(temp_hd_2)
+                except WindowsError:
+                    os.rename(temp_hd_2, movPath)
                 os.remove(audioPath)
             if self.fullHdPreview:
                 self.playblast((1920, 1080), hd=True)
@@ -355,6 +360,7 @@ class Shot(object):
                 shutil.rmtree(jpgPath)
         except Exception as ex:
             return str(ex)
+ 
         finally:
             pc.camera(self.cameraName, e=True, overscan=overscan)
             pc.PyNode(self.cameraName).panZoomEnabled.set(panZoomEnabled)
