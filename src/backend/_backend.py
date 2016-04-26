@@ -499,6 +499,9 @@ class Shot(object):
         except Exception as ex:
             return str(ex)
         
+def saveScene():
+    cmds.file(save=True, f=True)
+        
 def backupMayaFile(seq):
     tc.checkin(seq, 'ANIMATION/MSE', '')
 

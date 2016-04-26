@@ -188,8 +188,12 @@ class ShotExporter(Form1, Base1, cui.TacticUiBase):
                 self.showMessage(msg='The system could not find the path specified\n%s'%self.getDirectory())
                 return
         if be.sceneModified():
-            self.showMessage(msg='Scene contains unsaved changes, save to proceed')
-            return
+            btn = self.showMessage(msg='Scene contains unsaved changes',
+                                   ques='Do you want to save and continue',
+                                   icon=QMessageBox.Question,
+                                   btns=QMessageBox.Yes|QMessageBox.No)
+            if btn == QMessageBox.No: return
+            be.saveScene()
         errors = {}
         try:
             self.setBusy()
