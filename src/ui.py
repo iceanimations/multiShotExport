@@ -189,7 +189,7 @@ class ShotExporter(Form1, Base1, cui.TacticUiBase):
                 return
         if be.sceneModified():
             btn = self.showMessage(msg='Scene contains unsaved changes',
-                                   ques='Do you want to save and continue',
+                                   ques='Do you want to save and continue?',
                                    icon=QMessageBox.Question,
                                    btns=QMessageBox.Yes|QMessageBox.No)
             if btn == QMessageBox.No: return
