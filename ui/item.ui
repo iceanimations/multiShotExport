@@ -450,7 +450,7 @@ QFrame QToolTip { background-color: lightYellow;
                <string>JPG</string>
               </property>
               <property name="checked">
-               <bool>true</bool>
+               <bool>false</bool>
               </property>
              </widget>
             </item>
@@ -644,7 +644,7 @@ QFrame QToolTip { background-color: lightYellow}</string>
             <item>
              <widget class="QCheckBox" name="nukeButton">
               <property name="enabled">
-               <bool>true</bool>
+               <bool>false</bool>
               </property>
               <property name="toolTip">
                <string>Export this camera for nuke</string>
