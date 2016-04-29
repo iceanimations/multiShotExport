@@ -189,11 +189,11 @@ class ShotExporter(Form1, Base1, cui.TacticUiBase):
                 return
         if be.sceneModified():
             btn = self.showMessage(msg='Scene contains unsaved changes',
-                                   ques='Do you want to save and continue?',
+                                   ques='Do you want to save changes?',
                                    icon=QMessageBox.Question,
-                                   btns=QMessageBox.Yes|QMessageBox.No)
-            if btn == QMessageBox.No: return
-            be.saveScene()
+                                   btns=QMessageBox.Yes|QMessageBox.No|QMessageBox.Cancel)
+            if btn == QMessageBox.Cancel: return
+            if btn == QMessageBox.Yes: be.saveScene()
         errors = {}
         try:
             self.setBusy()
