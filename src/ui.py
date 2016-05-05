@@ -203,7 +203,8 @@ class ShotExporter(Form1, Base1, cui.TacticUiBase):
                 self.showMessage(msg=str(ex), icon=QMessageBox.Critical)
                 return
             shots = self.getSelectedShots()
-            #imaya.toggleTextureMode(True)
+            imaya.toggleViewport2Point0(True)
+            imaya.toggleTextureMode(True)
             be.displaySmoothness(True)
             if shots:
                 self.showProgressBar(len(shots))
@@ -223,6 +224,8 @@ class ShotExporter(Form1, Base1, cui.TacticUiBase):
             self.hideProgressBar()
             self.clearStatus()
             be.displaySmoothness(False)
+            imaya.toggleTextureMode(False)
+            imaya.toggleViewport2Point0(False)
 
 
 Form2, Base2 = uic.loadUiType(osp.join(uiPath, 'item.ui'))
