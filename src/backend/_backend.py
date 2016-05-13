@@ -51,7 +51,7 @@ class Shot(object):
         self.displayLayers = {} # contais all the display layers found in the scene as keys, with True or False as value
         self.hdPreview = True # determines whether to export 720 preview or not
         self.fullHdPreview = True # determines whether to export 1080 preview or not
-        self.jpgPreview = True # determines whether to export preview as jpg sequence or not
+        self.jpgPreview = False # determines whether to export preview as jpg sequence or not
         self.bakeCamera = False # determines whether to bake camera or not before export
         self.nukeCamera = True # determines whether to export camera for nuke or not
         self.tempPath = None # temp path to shot directory in user home
@@ -501,6 +501,9 @@ class Shot(object):
                     pc.delete(newobj)
         except Exception as ex:
             return str(ex)
+        
+def isGeoSetValid(geoset):
+    return pc.PyNode(geoset).hasAttr('cacheName')
         
 def saveScene():
     cmds.file(save=True, f=True)

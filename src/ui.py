@@ -381,6 +381,9 @@ class Item(Form2, Base2):
             btn.toggled.connect(self.toggleCacheSelectAllButton)
             self.geosetButton.append(btn)
             self.assetLayout.addWidget(btn)
+            if not be.isGeoSetValid(asset):
+                btn.setChecked(False)
+                btn.setEnabled(False)
         # populate the display layer buttons
         for btn in self.displayLayerButtons:
             btn.deleteLater()
