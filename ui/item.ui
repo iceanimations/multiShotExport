@@ -633,6 +633,9 @@ QFrame QToolTip { background-color: lightYellow}</string>
             </item>
             <item>
              <widget class="QCheckBox" name="bakeButton">
+              <property name="enabled">
+               <bool>false</bool>
+              </property>
               <property name="toolTip">
                <string>Bake this camera before exporting</string>
               </property>
