@@ -348,7 +348,7 @@ class Shot(object):
                     subprocess.call('\"'+ osp.join(imgMgcPath, 'ffmpeg.exe') +'\" -i %s -vn -acodec copy %s'%(movPath, audioPath), shell=True)
                     os.remove(movPath)
                     # create mov file from jpgs
-                    subprocess.call('\"'+ osp.join(imgMgcPath, 'ffmpeg.exe') +'\" -start_number '+ str(self.startFrame) +' -i '+ osp.join(jpgPath, self.getCameraNiceName() + '.%05d.jpg') +' -c:v libx264 '+ movPath, shell=True)
+                    subprocess.call('\"'+ osp.join(imgMgcPath, 'ffmpeg.exe') +'\" -start_number '+ str(self.startFrame) +' -i '+ osp.join(jpgPath, self.getCameraNiceName() + '.%05d.jpg') +' -c:v mjpeg '+ movPath, shell=True)
                     # add extracted audio
                     temp_hd = osp.join(osp.dirname(movPath), 'temp_hd.mov')
                     temp_hd_2 = osp.join(osp.dirname(movPath), 'temp_hd_2.mov')
@@ -408,7 +408,7 @@ class Shot(object):
                 pc.parent(duplicate_cam, w=True)
                 pc.select([orig_cam, duplicate_cam])
                 constraints = set(pc.ls(type=pc.nt.ParentConstraint))
-                pc.mel.eval('doCreateParentConstraintArgList 1 { "1","0","0","0","0","0","0","1","","1" };')
+                pc.mel.eval('doCreateParentConstraintArgList 1 { "0","0","0","0","0","0","0","1","","1" };')
                 if constraints:
                     cons = set(pc.ls(type=pc.nt.ParentConstraint)).difference(constraints).pop()
                 else:
