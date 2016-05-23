@@ -15,6 +15,7 @@ import appUsageApp
 import qtify_maya_window as qtfy
 import imaya
 import iutil
+import os
 
 reload(qutil)
 reload(cui)
@@ -194,7 +195,7 @@ class ShotExporter(Form1, Base1, cui.TacticUiBase):
                                    btns=QMessageBox.Yes|QMessageBox.No|QMessageBox.Cancel)
             if btn == QMessageBox.Cancel: return
             if btn == QMessageBox.Yes: be.saveScene()
-        errors = {}
+        errors = {} 
         try:
             self.setBusy()
             try:
@@ -212,7 +213,8 @@ class ShotExporter(Form1, Base1, cui.TacticUiBase):
                     err = shot.export()
                     if err: errors[shot.cameraName] = err
                     self.updateProgressBar(i + 1)
-                be.backupMayaFile(self.getSeq())
+                if not os.environ['USERNAME'] in ['qurban.ali', 'talha.ahmed']:
+                    be.backupMayaFile(self.getSeq())
             if errors:
                 self.showMessage(msg='Errors occurred while exporting Shots',
                                  details=qutil.dictionaryToDetails(errors),

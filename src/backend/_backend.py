@@ -214,6 +214,7 @@ class Shot(object):
         self.switchToMe()
         hideFaceUi()
         hideShowCurves(True)
+        
         if self.parentWin:
             self.parentWin.setStatus('%s: Exporting Camera'%self.getCameraNiceName())
         err = self.exportCamera()
@@ -299,7 +300,7 @@ class Shot(object):
             polyUnite = pc.createNode("polyUnite")
             for i in xrange(0, len(meshes)):
                 meshes[i].outMesh >> polyUnite.inputPoly[i]
-                meshes[i].worldMatrix[0] >> polyUnite.inputMat[i]
+                meshes[i].worldMatrix[meshes[i].instanceNumber()] >> polyUnite.inputMat[i]
             polyUnite.output >> combinedMesh.inMesh
         return combinedMeshes, errors
     
