@@ -272,7 +272,7 @@ class Shot(object):
                 if meshes:
                     pc.select(meshes)
                     pc.Mel.eval(command)
-                    pc.delete(meshes)
+                    pc.delete([mesh.firstParent() for mesh in meshes])
         except Exception as ex:
             errors.append(str(ex))
         return errors
