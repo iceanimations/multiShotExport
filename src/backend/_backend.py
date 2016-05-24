@@ -555,8 +555,6 @@ def displaySmoothness(smooth=True):
     imaya.displaySmoothness(smooth)
     pc.setAttr("hardwareRenderingGlobals.ssaoEnable", smooth)
     if smooth:
-        pc.setAttr("hardwareRenderingGlobals.ssaoAmount", 2)
-    else:
         pc.setAttr("hardwareRenderingGlobals.ssaoAmount", 1)
     pc.select(cl=True)
 
