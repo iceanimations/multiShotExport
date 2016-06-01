@@ -247,6 +247,10 @@ class Item(Form2, Base2):
         self.geosetButton = []
         self.update()
         
+        self.hdButton.hide()
+        self.fullHdButton.hide()
+        self.jpgButton.hide()
+        
         self.style = ('background-image: url(%s);\n'+
                       'background-repeat: no-repeat;\n'+
                       'background-position: center right')
