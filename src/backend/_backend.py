@@ -485,8 +485,8 @@ class Shot(object):
             if osp.exists(tempFilePath):
                 shutil.rmtree(tempFilePath)
             os.mkdir(tempFilePath)
-            start_time = int(self._item.getInFrame())
-            end_time = int(self._item.getOutFrame())
+            start_time = int(self.startFrame)
+            end_time = int(self.endFrame)
             rx = conf['texture_resX']
             ry = conf['texture_resY']
     
