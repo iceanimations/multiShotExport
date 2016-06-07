@@ -22,6 +22,7 @@ reload(cui)
 reload(appUsageApp)
 reload(tc)
 reload(be)
+reload(iutil)
 
 from pprint import pprint
 
@@ -83,10 +84,6 @@ class ShotExporter(Form1, Base1, cui.TacticUiBase):
     
     def handleDirectoryChange(self, text):
         qutil.addOptionVar(directoryKey, text)
-    
-    def setStatus(self, msg):
-        self.statusBar().showMessage(msg)
-        qApp.processEvents()
         
     def clearStatus(self):
         self.statusBar().clearMessage()
@@ -108,8 +105,9 @@ class ShotExporter(Form1, Base1, cui.TacticUiBase):
         self.progressBar.hide()
         qApp.processEvents()
         
-    def setSatus(self, msg, timeout=3000):
+    def setStatus(self, msg, timeout=0):
         self.statusBar().showMessage(msg, timeout)
+        qApp.processEvents()
         
     def showSelectedItems(self, shots):
         for item in self.items:
@@ -208,11 +206,20 @@ class ShotExporter(Form1, Base1, cui.TacticUiBase):
             imaya.toggleTextureMode(True)
             be.displaySmoothness(True)
             if shots:
+                time1 = time2 = dataSize = 0
                 self.showProgressBar(len(shots))
                 for i, shot in enumerate(shots):
                     err = shot.export()
+                    time1 += shot.exportTime
+                    time2 += shot.saveTime
+                    dataSize += shot.dataSize
                     if err: errors[shot.cameraName] = err
                     self.updateProgressBar(i + 1)
+                if time1 > 60: time1 /= 60.0; time1 = str(round(time1, 2)) + ' Min'
+                else: time1 = str(round(time1, 2)) + ' Sec'
+                if time2 > 60: time2 /= 60.0; time2 = str(round(time2, 2)) + ' Min'
+                else: time2 = str(round(time2, 2)) + ' Sec'
+                self.setStatus('Data: %s MB  -  Export Time: %s  -  Save Time: %s'%(dataSize, time1, time2))
                 if not os.environ['USERNAME'] in ['qurban.ali', 'talha.ahmed']:
                     be.backupMayaFile(self.getSeq())
             if errors:
@@ -224,11 +231,10 @@ class ShotExporter(Form1, Base1, cui.TacticUiBase):
         finally:
             self.releaseBusy()
             self.hideProgressBar()
-            self.clearStatus()
+            #self.clearStatus()
             be.displaySmoothness(False)
             imaya.toggleTextureMode(False)
             imaya.toggleViewport2Point0(False)
-
 
 Form2, Base2 = uic.loadUiType(osp.join(uiPath, 'item.ui'))
 class Item(Form2, Base2):

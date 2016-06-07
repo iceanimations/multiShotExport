@@ -15,6 +15,7 @@ import fillinout
 import shutil
 import iutil
 import imaya
+import time
 import json
 import os
 import re
@@ -55,6 +56,9 @@ class Shot(object):
         self.bakeCamera = True # determines whether to bake camera or not before export
         self.nukeCamera = True # determines whether to export camera for nuke or not
         self.tempPath = None # temp path to shot directory in user home
+        self.dataSize = 0
+        self.saveTime = 0
+        self.exportTime = 0
 
         self.setup()
         self.saveToScene()
@@ -214,7 +218,7 @@ class Shot(object):
         self.switchToMe()
         hideFaceUi()
         hideShowCurves(True)
-        
+        t2 = time.time()
         if self.parentWin:
             self.parentWin.setStatus('%s: Exporting Camera'%self.getCameraNiceName())
         err = self.exportCamera()
@@ -232,8 +236,11 @@ class Shot(object):
         if self.parentWin:
             self.parentWin.setStatus('%s: Exporting Animated Textures'%self.getCameraNiceName())
         err = self.exportAnimatedTextures()
+        self.exportTime = time.time() - t2
         if err: errors.append(err)
+        self.dataSize = iutil.get_directory_size(self.tempPath)
         # upload to TACTIC
+        t1 = time.time()
         if self.parentWin:
             self.parentWin.setStatus('%s: Saving to TACTIC'%self.getCameraNiceName())
         if self.parentWin:
@@ -247,6 +254,7 @@ class Shot(object):
         else:
             err = tc.uploadShotToTactic(self.tempPath)
             if err: errors.append(err)
+        self.saveTime = time.time() - t1
         showFaceUi()
         hideShowCurves(False)
         return errors
