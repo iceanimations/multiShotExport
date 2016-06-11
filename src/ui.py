@@ -47,6 +47,7 @@ class ShotExporter(Form1, Base1, cui.TacticUiBase):
 
         self.items = []
         self.collapsed = True
+        self.smoothGeosets = None
         directory = qutil.getOptionVar(directoryKey)
         self.lastDirectory = directory if directory else ''
         self.directoryBox.setText(self.lastDirectory)
@@ -63,6 +64,7 @@ class ShotExporter(Form1, Base1, cui.TacticUiBase):
         self.toggleCollapseButton.clicked.connect(self.toggleItems)
         self.browseButton.clicked.connect(self.setDirectory)
         self.directoryBox.textChanged.connect(self.handleDirectoryChange)
+        self.geosetDialogButton.clicked.connect(self.showGeosetDialog)
         
         self.shotBox = cui.MultiSelectComboBox(self, '--Shots--')
         self.shotBox.setStyleSheet('QPushButton{min-width: 100px;}')
@@ -75,6 +77,11 @@ class ShotExporter(Form1, Base1, cui.TacticUiBase):
         self.progressBar.hide()
         
         appUsageApp.updateDatabase('shot_subm')
+        
+    def showGeosetDialog(self):
+        dialog = GeosetDialog(self)
+        dialog.exec_()
+        self.smoothGeosets = dialog.getSmoothGeosets()
         
     def setDirectory(self):
         directory = QFileDialog.getExistingDirectory(self, __title__, self.lastDirectory)
@@ -186,6 +193,15 @@ class ShotExporter(Form1, Base1, cui.TacticUiBase):
             if not osp.exists(self.getDirectory()):
                 self.showMessage(msg='The system could not find the path specified\n%s'%self.getDirectory())
                 return
+        shots = self.getSelectedShots()
+        if any([shot.preview for shot in shots]):
+            if not self.smoothGeosets:
+                btn = self.showMessage(msg='Geosets not selected to make them smooth',
+                                       ques='Do you want to make all Geosets smooth?',
+                                       icon=QMessageBox.Question,
+                                       btns=QMessageBox.Yes|QMessageBox.Cancel)
+                if btn == QMessageBox.Cancel:
+                    return
         if be.sceneModified():
             btn = self.showMessage(msg='Scene contains unsaved changes',
                                    ques='Do you want to save changes?',
@@ -193,7 +209,7 @@ class ShotExporter(Form1, Base1, cui.TacticUiBase):
                                    btns=QMessageBox.Yes|QMessageBox.No|QMessageBox.Cancel)
             if btn == QMessageBox.Cancel: return
             if btn == QMessageBox.Yes: be.saveScene()
-        errors = {} 
+        errors = {}
         try:
             self.setBusy()
             try:
@@ -201,11 +217,12 @@ class ShotExporter(Form1, Base1, cui.TacticUiBase):
             except Exception as ex:
                 self.showMessage(msg=str(ex), icon=QMessageBox.Critical)
                 return
-            shots = self.getSelectedShots()
-            imaya.toggleViewport2Point0(True)
-            imaya.toggleTextureMode(True)
-            be.displaySmoothness(True)
             if shots:
+                be.displaySmoothness(False)
+                if any([shot.preview for shot in shots]):
+                    imaya.toggleViewport2Point0(True)
+                    imaya.toggleTextureMode(True)
+                    be.displaySmoothness(True, self.smoothGeosets)
                 time1 = time2 = dataSize = 0
                 self.showProgressBar(len(shots))
                 for i, shot in enumerate(shots):
@@ -424,3 +441,73 @@ class Item(Form2, Base2):
     def toggleCollapse(self, state):
         self.collapsed = state
         self.collapse()
+
+Form3, Base3 = uic.loadUiType(osp.join(uiPath, 'geosets.ui'))
+class GeosetDialog(Form3, Base3):
+    def __init__(self, parent=None):
+        super(GeosetDialog, self).__init__(parent)
+        self.setupUi(self)
+        self.parentWin = parent
+        self.setWindowTitle('Smooth Box')
+        
+        self.appendButton.setIcon(QIcon(osp.join(iconPath, 'ic_append_char.png')))
+        self.removeButton.setIcon(QIcon(osp.join(iconPath, 'ic_remove_char.png')))
+        self.addButton.setIcon(QIcon(osp.join(iconPath, 'ic_add_char.png')))
+        
+        self.items = []
+        
+        self.okButton.clicked.connect(self.ok)
+        self.selectAllButton.clicked.connect(self.selectAll)
+        self.addButton.clicked.connect(self.addSelection)
+        self.appendButton.clicked.connect(self.appendSelection)
+        self.removeButton.clicked.connect(self.removeSelection)
+        
+        self.populate()
+        self.checkSelectAllButton()
+        
+    def addSelection(self):
+        geosets = [geoset.name() for geoset in be.findAllConnectedGeosets()]
+        if geosets:
+            for item in self.items:
+                item.setChecked(item.text() in geosets)
+    
+    def appendSelection(self):
+        geosets = [geoset.name() for geoset in be.findAllConnectedGeosets()]
+        if geosets:
+            for item in self.items:
+                if item.text() in geosets:
+                    item.setChecked(True)
+    
+    def removeSelection(self):
+        geosets = [geoset.name() for geoset in be.findAllConnectedGeosets()]
+        if geosets:
+            for item in self.items:
+                if item.text() in geosets:
+                    item.setChecked(False)
+        
+    def selectAll(self):
+        for item in self.items:
+            item.setChecked(self.selectAllButton.isChecked())
+    
+    def checkSelectAllButton(self):
+        self.selectAllButton.setChecked(all([item.isChecked() for item in self.items]))
+
+    def closeEvent(self, event):
+        self.deleteLater()
+
+    def populate(self):
+        for geoset in be.getGeoSets():
+            chbox = QCheckBox(geoset.name(), self)
+            self.itemsLayout.addWidget(chbox)
+            chbox.toggled.connect(self.checkSelectAllButton)
+            self.items.append(chbox)
+            if self.parentWin.smoothGeosets:
+                chbox.setChecked(geoset.name() in self.parentWin.smoothGeosets)
+            else:
+                chbox.setChecked(True)
+
+    def getSmoothGeosets(self):
+        return [item.text() for item in self.items if item.isChecked()]
+
+    def ok(self):
+        self.accept()

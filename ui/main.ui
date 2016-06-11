@@ -76,6 +76,16 @@
        </spacer>
       </item>
       <item>
+       <widget class="QToolButton" name="geosetDialogButton">
+        <property name="toolTip">
+         <string>Smooth Box: Select Geosets to make them smooth for preview</string>
+        </property>
+        <property name="text">
+         <string>SB</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QToolButton" name="toggleCollapseButton">
         <property name="toolTip">
          <string>Collapse/Expand all Shots</string>

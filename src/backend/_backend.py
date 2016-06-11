@@ -558,12 +558,14 @@ def getConf():
     conf["worldSpace"] = 1
     return conf
 
-def displaySmoothness(smooth=True):
-    pc.select([mesh for _set in getGeoSets() for mesh in _set.members()])
-    imaya.displaySmoothness(smooth)
+def displaySmoothness(smooth=True, geosets=None):
     pc.setAttr("hardwareRenderingGlobals.ssaoEnable", smooth)
+    pc.select([mesh for _set in getGeoSets() for mesh in _set.members()])
     if smooth:
         pc.setAttr("hardwareRenderingGlobals.ssaoAmount", 1)
+        if geosets:
+            pc.select([mesh for _set in geosets for mesh in pc.PyNode(_set).members()])
+    imaya.displaySmoothness(smooth)
     pc.select(cl=True)
 
 def getGeoSets():
