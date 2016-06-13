@@ -193,15 +193,16 @@ class ShotExporter(Form1, Base1, cui.TacticUiBase):
             if not osp.exists(self.getDirectory()):
                 self.showMessage(msg='The system could not find the path specified\n%s'%self.getDirectory())
                 return
+        smooth = True
         shots = self.getSelectedShots()
         if any([shot.preview for shot in shots]):
             if not self.smoothGeosets:
                 btn = self.showMessage(msg='Geosets not selected to make them smooth',
                                        ques='Do you want to make all Geosets smooth?',
                                        icon=QMessageBox.Question,
-                                       btns=QMessageBox.Yes|QMessageBox.Cancel)
-                if btn == QMessageBox.Cancel:
-                    return
+                                       btns=QMessageBox.Yes|QMessageBox.No|QMessageBox.Cancel)
+                if btn == QMessageBox.Cancel: return
+                if btn == QMessageBox.No: smooth = False
         if be.sceneModified():
             btn = self.showMessage(msg='Scene contains unsaved changes',
                                    ques='Do you want to save changes?',
@@ -219,7 +220,7 @@ class ShotExporter(Form1, Base1, cui.TacticUiBase):
                 return
             if shots:
                 be.displaySmoothness(False)
-                if any([shot.preview for shot in shots]):
+                if any([shot.preview for shot in shots]) and smooth:
                     imaya.toggleViewport2Point0(True)
                     imaya.toggleTextureMode(True)
                     be.displaySmoothness(True, self.smoothGeosets)
