@@ -483,31 +483,32 @@ class Shot(object):
     def exportAnimatedTextures(self):
         ''' bake export animated textures from the scene '''
         try:
-            conf = getConf()
-            if not self.geosets:
-                return False
-            animatedTextures = self.getAnimatedTextures()
-            if not animatedTextures:
-                return False
-            tempFilePath = osp.join(self.tempPath, 'tex')
-            if osp.exists(tempFilePath):
-                shutil.rmtree(tempFilePath)
-            os.mkdir(tempFilePath)
-            start_time = int(self.startFrame)
-            end_time = int(self.endFrame)
-            rx = conf['texture_resX']
-            ry = conf['texture_resY']
-    
-            for curtime in range(start_time, end_time+1):
-                num = '%04d'%curtime
-                pc.currentTime(curtime, e=True)
-    
-                for name, attr in animatedTextures:
-                    fileImageName = osp.join(tempFilePath,
-                            '.'.join([name, num, 'png']))
-                    newobj = pc.convertSolidTx(attr, samplePlane=True, rx=rx, ry=ry,
-                            fil='png', fileImageName=fileImageName)
-                    pc.delete(newobj)
+            if any(['nano' in _set for _set, val in self.geosets.items() if val]):
+                conf = getConf()
+                if not self.geosets:
+                    return False
+                animatedTextures = self.getAnimatedTextures()
+                if not animatedTextures:
+                    return False
+                tempFilePath = osp.join(self.tempPath, 'tex')
+                if osp.exists(tempFilePath):
+                    shutil.rmtree(tempFilePath)
+                os.mkdir(tempFilePath)
+                start_time = int(self.startFrame)
+                end_time = int(self.endFrame)
+                rx = conf['texture_resX']
+                ry = conf['texture_resY']
+        
+                for curtime in range(start_time, end_time+1):
+                    num = '%04d'%curtime
+                    pc.currentTime(curtime, e=True)
+        
+                    for name, attr in animatedTextures:
+                        fileImageName = osp.join(tempFilePath,
+                                '.'.join([name, num, 'png']))
+                        newobj = pc.convertSolidTx(attr, samplePlane=True, rx=rx, ry=ry,
+                                fil='png', fileImageName=fileImageName)
+                        pc.delete(newobj)
         except Exception as ex:
             return str(ex)
         
