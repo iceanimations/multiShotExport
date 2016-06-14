@@ -357,7 +357,7 @@ class Shot(object):
                     subprocess.call('\"'+ osp.join(imgMgcPath, 'ffmpeg.exe') +'\" -i %s -vn -acodec copy %s'%(movPath, audioPath), shell=True)
                     os.remove(movPath)
                     # create mov file from jpgs
-                    subprocess.call('\"'+ osp.join(imgMgcPath, 'ffmpeg.exe') +'\" -start_number '+ str(self.startFrame) +' -i '+ osp.join(jpgPath, self.getCameraNiceName() + '.%05d.jpg') +' -c:v prores '+ movPath, shell=True)
+                    subprocess.call('\"'+ osp.join(imgMgcPath, 'ffmpeg.exe') +'\" -start_number '+ str(self.startFrame) +' -i '+ osp.join(jpgPath, self.getCameraNiceName() + '.%05d.jpg') +' -c:v libx264 -g 1 -bf 0 '+ movPath, shell=True)
                     # add extracted audio
                     temp_hd = osp.join(osp.dirname(movPath), 'temp_hd.mov')
                     temp_hd_2 = osp.join(osp.dirname(movPath), 'temp_hd_2.mov')
