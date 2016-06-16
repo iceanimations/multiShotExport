@@ -345,9 +345,12 @@ class Shot(object):
             cameraName = self.getCameraNiceName()
             time = getDateTime()
             jpgPath = osp.dirname(jpgPath)
+            fps = '25'
+            if pc.currentUnit(q=True, time=True) != 'pal': fps = 'Unknown'
+            focalLength = str(pc.camera(pc.lookThru(q=True), q=True, focalLength=True))
             for image in sorted(os.listdir(jpgPath)):
                 imagePath = osp.join(jpgPath, image)
-                subprocess.call('\"'+ osp.join(imgMgcPath, 'convert.exe') +'\" %s -undercolor #00000060 -pointsize 35 -channel RGBA -fill white -draw "text 20,30 %s" -draw "text 850,30 %s" -draw "text 1680,30 %s" -draw "text 800,1050 %s" %s'%(imagePath, username, cameraName, 'Frame_'+ image.split('.')[1], 'Time_'+ time, imagePath), shell=True)
+                subprocess.call('\"'+ osp.join(imgMgcPath, 'convert.exe') +'\" %s -undercolor #00000060 -pointsize 35 -channel RGBA -fill white -draw "text 20,30 %s" -draw "text 850,30 %s" -draw "text 1680,30 %s" -draw "text 20,1050 %s" -draw "text 800,1050 %s" -draw "text 1680,1050 %s" %s'%(imagePath, username, cameraName, 'Frame_'+ image.split('.')[1], 'FocalLength_'+ focalLength, 'Time_'+ time, 'FPS_'+ fps, imagePath), shell=True)
             # convert labled jpgs to .mov
             movPath = osp.join(self.tempPath, 'preview', self.getCameraNiceName() +'.mov')
             # extract audio
