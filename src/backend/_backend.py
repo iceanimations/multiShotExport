@@ -50,9 +50,9 @@ class Shot(object):
         self.endFrame = None
         self.geosets = {} # contains all the assets in this shot retrieved from tactic as keys, with True or False as value
         self.displayLayers = {} # contais all the display layers found in the scene as keys, with True or False as value
-        self.hdPreview = True # determines whether to export 720 preview or not
+        self.hdPreview = False # determines whether to export 720 preview or not
         self.fullHdPreview = True # determines whether to export 1080 preview or not
-        self.jpgPreview = False # determines whether to export preview as jpg sequence or not
+        self.jpgPreview = True # determines whether to export preview as jpg sequence or not
         self.bakeCamera = True # determines whether to bake camera or not before export
         self.nukeCamera = True # determines whether to export camera for nuke or not
         self.tempPath = None # temp path to shot directory in user home
@@ -131,11 +131,11 @@ class Shot(object):
             self.cache = data['cache']
             self.preview = data['preview']
             self.camera = data['camera']
-            self.hdPreview = data['hdPreview']
-            self.fullHdPreview = data['fullHdPreview']
-            self.jpgPreview = data['jpgPreview']
+            self.hdPreview = False #data['hdPreview']
+            self.fullHdPreview = True #data['fullHdPreview']
+            self.jpgPreview = True #data['jpgPreview']
             self.bakeCamera = True #data['bakeCamera']
-            self.nukeCamera = data['nukeCamera']
+            self.nukeCamera = True #data['nukeCamera']
         else:
             # set the assets
             for geoset in getGeoSets():
@@ -327,56 +327,46 @@ class Shot(object):
         if not osp.exists(imgMgcPath):
             imgMgcPath = 'R:\\Pipe_Repo\\Users\\Qurban\\applications\\ImageMagick'
         try:
-            if self.hdPreview or self.jpgPreview:
-                path = self.playblast((1280, 720)) +'.mov'
-                # convert video preview to jpgs
-                if self.startFrame != 0:
-                    startFrame = '-start_number %s '%self.startFrame
-                else: startFrame = ''
-                subprocess.call('\"'+ osp.join(imgMgcPath, 'ffmpeg.exe') +'\" -i %s %s-q:v 2 %s'%(osp.normpath(path), startFrame, osp.normpath(jpgPath)), shell=True)
-                # rename the files when self.frame == 0
-                frameRange = list(reversed(range(self.startFrame, self.endFrame + 1)))
-                if not startFrame:
-                    for image in sorted(os.listdir(osp.dirname(jpgPath))):
-                        newName = re.sub('\.\d{5}\.', '.'+ str(frameRange.pop()).zfill(5) +'.', image)
-                        imagePath = osp.join(osp.dirname(jpgPath), newName)
-                        os.rename(osp.join(osp.dirname(jpgPath), image), imagePath)
-                # add info to the jpgs
-                username = getUsername()
-                cameraName = self.getCameraNiceName()
-                time = getDateTime()
-                jpgPath = osp.dirname(jpgPath)
-                for image in sorted(os.listdir(jpgPath)):
-                    imagePath = osp.join(jpgPath, image)
-                    subprocess.call('\"'+ osp.join(imgMgcPath, 'convert.exe') +'\" %s -undercolor #00000060 -pointsize 35 -channel RGBA -fill white -draw "text 20,30 %s" -draw "text 500,30 %s" -draw "text 1050,30 %s" -draw "text 450,700 %s" %s'%(imagePath, username, cameraName, 'Frame_'+ image.split('.')[1], 'Time_'+ time, imagePath), shell=True)
-                if self.hdPreview:
-                    # convert labled jpgs to .mov
-                    movPath = osp.join(self.tempPath, 'preview', self.getCameraNiceName() +'.mov')
-                    # extract audio
-                    audioPath = osp.join(osp.dirname(movPath), 'audio.wav')
-                    subprocess.call('\"'+ osp.join(imgMgcPath, 'ffmpeg.exe') +'\" -i %s -vn -acodec copy %s'%(movPath, audioPath), shell=True)
-                    os.remove(movPath)
-                    # create mov file from jpgs
-                    subprocess.call('\"'+ osp.join(imgMgcPath, 'ffmpeg.exe') +'\" -start_number '+ str(self.startFrame) +' -i '+ osp.join(jpgPath, self.getCameraNiceName() + '.%05d.jpg') +' -c:v libx264 -g 1 -bf 0 '+ movPath, shell=True)
-                    # add extracted audio
-                    temp_hd = osp.join(osp.dirname(movPath), 'temp_hd.mov')
-                    temp_hd_2 = osp.join(osp.dirname(movPath), 'temp_hd_2.mov')
-                    subprocess.call('\"'+ osp.join(imgMgcPath, 'ffmpeg.exe') +'\" -i %s -i %s -codec copy -shortest %s'%(movPath, audioPath, temp_hd), shell=True)
-                    os.rename(movPath, temp_hd_2)
-                    try: # if audio in 0 KB in size and no preview is generated
-                        os.rename(temp_hd, movPath)
-                        os.remove(temp_hd_2)
-                    except WindowsError:
-                        os.rename(temp_hd_2, movPath)
-                    os.remove(audioPath)
-                else:
-                    shutil.rmtree(osp.dirname(path))
-            if self.fullHdPreview:
-                self.playblast((1920, 1080), hd=True)
-            if not self.jpgPreview:
-                if not osp.exists(jpgPath): # if the jpg path is like /path/preview.%05d.jpg
-                    jpgPath = osp.dirname(jpgPath)
-                shutil.rmtree(jpgPath)
+            path = self.playblast((1920, 1080)) +'.mov'
+            # convert video preview to jpgs
+            if self.startFrame != 0:
+                startFrame = '-start_number %s '%self.startFrame
+            else: startFrame = ''
+            subprocess.call('\"'+ osp.join(imgMgcPath, 'ffmpeg.exe') +'\" -i %s %s-q:v 2 %s'%(osp.normpath(path), startFrame, osp.normpath(jpgPath)), shell=True)
+            # rename the files when self.frame == 0
+            frameRange = list(reversed(range(self.startFrame, self.endFrame + 1)))
+            if not startFrame:
+                for image in sorted(os.listdir(osp.dirname(jpgPath))):
+                    newName = re.sub('\.\d{5}\.', '.'+ str(frameRange.pop()).zfill(5) +'.', image)
+                    imagePath = osp.join(osp.dirname(jpgPath), newName)
+                    os.rename(osp.join(osp.dirname(jpgPath), image), imagePath)
+            # add info to the jpgs
+            username = getUsername()
+            cameraName = self.getCameraNiceName()
+            time = getDateTime()
+            jpgPath = osp.dirname(jpgPath)
+            for image in sorted(os.listdir(jpgPath)):
+                imagePath = osp.join(jpgPath, image)
+                subprocess.call('\"'+ osp.join(imgMgcPath, 'convert.exe') +'\" %s -undercolor #00000060 -pointsize 35 -channel RGBA -fill white -draw "text 20,30 %s" -draw "text 500,30 %s" -draw "text 1050,30 %s" -draw "text 450,700 %s" %s'%(imagePath, username, cameraName, 'Frame_'+ image.split('.')[1], 'Time_'+ time, imagePath), shell=True)
+            # convert labled jpgs to .mov
+            movPath = osp.join(self.tempPath, 'preview', self.getCameraNiceName() +'.mov')
+            # extract audio
+            audioPath = osp.join(osp.dirname(movPath), 'audio.wav')
+            subprocess.call('\"'+ osp.join(imgMgcPath, 'ffmpeg.exe') +'\" -i %s -vn -acodec copy %s'%(movPath, audioPath), shell=True)
+            os.remove(movPath)
+            # create mov file from jpgs
+            subprocess.call('\"'+ osp.join(imgMgcPath, 'ffmpeg.exe') +'\" -start_number '+ str(self.startFrame) +' -i '+ osp.join(jpgPath, self.getCameraNiceName() + '.%05d.jpg') +' -c:v libx264 -g 1 -bf 0 '+ movPath, shell=True)
+            # add extracted audio
+            temp_hd = osp.join(osp.dirname(movPath), 'temp_hd.mov')
+            temp_hd_2 = osp.join(osp.dirname(movPath), 'temp_hd_2.mov')
+            subprocess.call('\"'+ osp.join(imgMgcPath, 'ffmpeg.exe') +'\" -i %s -i %s -codec copy -shortest %s'%(movPath, audioPath, temp_hd), shell=True)
+            os.rename(movPath, temp_hd_2)
+            try: # if audio in 0 KB in size and no preview is generated
+                os.rename(temp_hd, movPath)
+                os.remove(temp_hd_2)
+            except WindowsError:
+                os.rename(temp_hd_2, movPath)
+            os.remove(audioPath)
         except Exception as ex:
             return str(ex)
  
