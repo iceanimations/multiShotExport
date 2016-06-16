@@ -347,7 +347,7 @@ class Shot(object):
             jpgPath = osp.dirname(jpgPath)
             for image in sorted(os.listdir(jpgPath)):
                 imagePath = osp.join(jpgPath, image)
-                subprocess.call('\"'+ osp.join(imgMgcPath, 'convert.exe') +'\" %s -undercolor #00000060 -pointsize 35 -channel RGBA -fill white -draw "text 20,30 %s" -draw "text 500,30 %s" -draw "text 1050,30 %s" -draw "text 450,700 %s" %s'%(imagePath, username, cameraName, 'Frame_'+ image.split('.')[1], 'Time_'+ time, imagePath), shell=True)
+                subprocess.call('\"'+ osp.join(imgMgcPath, 'convert.exe') +'\" %s -undercolor #00000060 -pointsize 35 -channel RGBA -fill white -draw "text 20,30 %s" -draw "text 850,30 %s" -draw "text 1680,30 %s" -draw "text 800,1050 %s" %s'%(imagePath, username, cameraName, 'Frame_'+ image.split('.')[1], 'Time_'+ time, imagePath), shell=True)
             # convert labled jpgs to .mov
             movPath = osp.join(self.tempPath, 'preview', self.getCameraNiceName() +'.mov')
             # extract audio
