@@ -478,8 +478,6 @@ class Shot(object):
         try:
             if any(['nano' in _set for _set, val in self.geosets.items() if val]):
                 conf = getConf()
-                if not self.geosets:
-                    return False
                 animatedTextures = self.getAnimatedTextures()
                 if not animatedTextures:
                     return False
@@ -498,9 +496,8 @@ class Shot(object):
         
                     for name, attr in animatedTextures:
                         fileImageName = osp.join(tempFilePath,
-                                '.'.join([name, num, 'png']))
-                        newobj = pc.convertSolidTx(attr, samplePlane=True, rx=rx, ry=ry,
-                                fil='png', fileImageName=fileImageName)
+                                '.'.join([name, num, 'jpg']))
+                        newobj = pc.convertSolidTx(attr, samplePlane=True, rx=rx, ry=ry, fil='jpg', fileImageName=fileImageName)
                         pc.delete(newobj)
         except Exception as ex:
             return str(ex)
@@ -542,10 +539,10 @@ def getConf():
     conf["cache_format"] = "mcc"
     conf["do_texture_export"] = 1
     conf["texture_export_data"] = [
-            ("(?i).*nano_regular.*", ["ExpRenderPlaneMtl.outColor"]),
-            ("(?i).*nano_docking.*", ["ExpRenderPlaneMtl.outColor"]),
-            ("(?i).*nano_covered.*", ["ExpRenderPlaneMtl.outColor"]),
-            ("(?i).*nano_with_bowling_arm.*", ["ExpRenderPlaneMtl.outColor"]),
+            ("(?i).*nano_regular.*", ["layeredTexture1.outColor"]),
+            ("(?i).*nano_docking.*", ["layeredTexture1.outColor"]),
+            ("(?i).*nano_covered.*", ["layeredTexture1.outColor"]),
+            ("(?i).*nano_with_bowling_arm.*", ["layeredTexture1.outColor"]),
             ("(?i).*nano_shawarma.*", ["NanoShawarmaExpRenderPlaneMtl.outColor"])]
     conf["texture_resX"] = 1024
     conf["texture_resY"] = 1024
