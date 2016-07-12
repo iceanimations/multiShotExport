@@ -390,7 +390,7 @@ class Shot(object):
         return pc.playblast(f=osp.join(path, name),
                             format='qt', fo=1, st=self.startFrame, et=self.endFrame,
                             s=audio, sequenceTime=0, clearCache=1, viewer=0,
-                            showOrnaments=1, fp=4, percent=100, compression="H.264",
+                            fp=4, percent=100, compression="H.264",
                             quality=100, widthHeight=resolution,
                             offScreen=1, orn=0)
     
