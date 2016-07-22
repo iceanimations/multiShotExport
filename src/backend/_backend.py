@@ -539,6 +539,7 @@ def getConf():
     conf["cache_format"] = "mcc"
     conf["do_texture_export"] = 1
     conf["texture_export_data"] = [
+            ("(?i).*badr_robot.*", ["layeredTexture1.outColor"]),
             ("(?i).*nano_regular.*", ["layeredTexture1.outColor"]),
             ("(?i).*nano_docking.*", ["layeredTexture1.outColor"]),
             ("(?i).*nano_covered.*", ["layeredTexture1.outColor"]),
