@@ -468,7 +468,7 @@ class Shot(object):
                     name = obj.name()
                     namespace = ':'.join(name.split(':')[:-1])
                     for attr in attrs:
-                        nombre = namespace + '.' + attr
+                        nombre = namespace + '.' + attr.replace(':', '_')
                         attr = pc.Attribute(namespace + ':' + attr)
                         texture_attrs.append((nombre, attr))
         return texture_attrs
@@ -476,29 +476,29 @@ class Shot(object):
     def exportAnimatedTextures(self):
         ''' bake export animated textures from the scene '''
         try:
-            if any(['nano' in _set for _set, val in self.geosets.items() if val]):
-                conf = getConf()
-                animatedTextures = self.getAnimatedTextures()
-                if not animatedTextures:
-                    return False
-                tempFilePath = osp.join(self.tempPath, 'tex')
-                if osp.exists(tempFilePath):
-                    shutil.rmtree(tempFilePath)
-                os.mkdir(tempFilePath)
-                start_time = int(self.startFrame)
-                end_time = int(self.endFrame)
-                rx = conf['texture_resX']
-                ry = conf['texture_resY']
-        
-                for curtime in range(start_time, end_time+1):
-                    num = '%04d'%curtime
-                    pc.currentTime(curtime, e=True)
-        
-                    for name, attr in animatedTextures:
-                        fileImageName = osp.join(tempFilePath,
-                                '.'.join([name, num, 'jpg']))
-                        newobj = pc.convertSolidTx(attr, samplePlane=True, rx=rx, ry=ry, fil='jpg', fileImageName=fileImageName)
-                        pc.delete(newobj)
+            #if any(['nano' in _set for _set, val in self.geosets.items() if val]):
+            conf = getConf()
+            animatedTextures = self.getAnimatedTextures()
+            if not animatedTextures:
+                return False
+            tempFilePath = osp.join(self.tempPath, 'tex')
+            if osp.exists(tempFilePath):
+                shutil.rmtree(tempFilePath)
+            os.mkdir(tempFilePath)
+            start_time = int(self.startFrame)
+            end_time = int(self.endFrame)
+            rx = conf['texture_resX']
+            ry = conf['texture_resY']
+    
+            for curtime in range(start_time, end_time+1):
+                num = '%04d'%curtime
+                pc.currentTime(curtime, e=True)
+    
+                for name, attr in animatedTextures:
+                    fileImageName = osp.join(tempFilePath,
+                            '.'.join([name, num, 'jpg']))
+                    newobj = pc.convertSolidTx(attr, samplePlane=True, rx=rx, ry=ry, fil='jpg', fileImageName=fileImageName)
+                    pc.delete(newobj)
         except Exception as ex:
             return str(ex)
         
@@ -539,7 +539,7 @@ def getConf():
     conf["cache_format"] = "mcc"
     conf["do_texture_export"] = 1
     conf["texture_export_data"] = [
-            ("(?i).*badr_robot.*", ["layeredTexture1.outColor"]),
+            ("(?i).*badr_robot.*", ["shader:layeredTexture1.outColor"]),
             ("(?i).*nano_regular.*", ["layeredTexture1.outColor"]),
             ("(?i).*nano_docking.*", ["layeredTexture1.outColor"]),
             ("(?i).*nano_covered.*", ["layeredTexture1.outColor"]),
