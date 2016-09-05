@@ -38,6 +38,16 @@ source "R:/Pipe_Repo/Users/Qurban/Scripts/openMotion.mel";
 """
 pc.mel.eval(mel) 
 
+timeUnits= {
+    'game': 15 ,
+    'film': 24 ,
+    'pal': 25  ,
+    'ntsc': 30 ,
+    'show': 48 ,
+    'palf': 50 ,
+    'ntscf': 60
+}
+
 class Shot(object):
     def __init__(self, parent=None, shot=None):
         self.parentWin = parent
@@ -346,7 +356,11 @@ class Shot(object):
             time = getDateTime()
             jpgPath = osp.dirname(jpgPath)
             fps = '25'
-            if pc.currentUnit(q=True, time=True) != 'pal': fps = 'Unknown'
+            currentTimeUnit = pc.currentUnit(q=True, time=True)
+            if currentTimeUnit in timeUnits:
+                fps = str(timeUnits[currentTimeUnit])
+            else:
+                fps = 'Unknown'
             focalLength = str(pc.camera(pc.lookThru(q=True), q=True, focalLength=True))
             for image in sorted(os.listdir(jpgPath)):
                 imagePath = osp.join(jpgPath, image)
