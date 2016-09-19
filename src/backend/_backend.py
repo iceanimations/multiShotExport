@@ -568,7 +568,7 @@ def displaySmoothness(smooth=True, geosets=None):
     pc.setAttr("hardwareRenderingGlobals.ssaoEnable", smooth)
     pc.select([mesh for _set in getGeoSets() for mesh in _set.members()])
     if smooth:
-        pc.setAttr("hardwareRenderingGlobals.ssaoAmount", 1)
+        pc.setAttr("hardwareRenderingGlobals.ssaoAmount", 0.4)
         if geosets:
             pc.select([mesh for _set in geosets for mesh in pc.PyNode(_set).members()])
     imaya.displaySmoothness(smooth)
