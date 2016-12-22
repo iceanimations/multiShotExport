@@ -220,7 +220,7 @@ class ShotExporter(Form1, Base1, cui.TacticUiBase):
                 return
             if shots:
                 be.displaySmoothness(False)
-                if any([shot.preview for shot in shots]) and smooth:
+                if any([shot.preview for shot in shots]):
                     imaya.toggleViewport2Point0(True)
                     imaya.toggleTextureMode(True)
                     be.displaySmoothness(True, self.smoothGeosets)
