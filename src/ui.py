@@ -221,9 +221,9 @@ class ShotExporter(Form1, Base1, cui.TacticUiBase):
             if shots:
                 be.displaySmoothness(False)
                 if any([shot.preview for shot in shots]):
-                    imaya.toggleViewport2Point0(False)
+                    #imaya.toggleViewport2Point0(False)
                     imaya.toggleTextureMode(True)
-                    be.displaySmoothness(True, self.smoothGeosets)
+                    be.displaySmoothness(smooth, self.smoothGeosets)
                 time1 = time2 = dataSize = 0
                 self.showProgressBar(len(shots))
                 for i, shot in enumerate(shots):
@@ -252,7 +252,7 @@ class ShotExporter(Form1, Base1, cui.TacticUiBase):
             #self.clearStatus()
             be.displaySmoothness(False)
             imaya.toggleTextureMode(False)
-            imaya.toggleViewport2Point0(False)
+            #imaya.toggleViewport2Point0(False)
 
 Form2, Base2 = uic.loadUiType(osp.join(uiPath, 'item.ui'))
 class Item(Form2, Base2):
