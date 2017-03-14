@@ -2,6 +2,9 @@ import src.ui as ui
 reload(ui)
 Window = ui.ShotExporter
 import pymel.core as pc
+import src.backend as backend
+reload(backend)
+from src.backend import *
 
 doCreateGeometryCache2 =r'''global proc string[] doCreateGeometryCache2 ( int $version, string $args[] )
 //A facsimle copy of doCreateGeometryCache just that args[6] i.e. export cache

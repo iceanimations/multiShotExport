@@ -16,6 +16,7 @@ import qtify_maya_window as qtfy
 import imaya
 import iutil
 import os
+import imaya
 
 reload(qutil)
 reload(cui)
@@ -23,6 +24,7 @@ reload(appUsageApp)
 reload(tc)
 reload(be)
 reload(iutil)
+reload(imaya)
 
 from pprint import pprint
 
@@ -61,6 +63,7 @@ class ShotExporter(Form1, Base1, cui.TacticUiBase):
         self.epBox.currentIndexChanged[str].connect(self.populateSequences)
         self.seqBox.currentIndexChanged[str].connect(self.populateShots)
         self.exportButton.clicked.connect(self.export)
+        self.submitButton.clicked.connect(lambda: self.export(mode='s'))
         self.toggleCollapseButton.clicked.connect(self.toggleItems)
         self.browseButton.clicked.connect(self.setDirectory)
         self.directoryBox.textChanged.connect(self.handleDirectoryChange)
@@ -147,7 +150,8 @@ class ShotExporter(Form1, Base1, cui.TacticUiBase):
             shots, err = tc.getShots(seq)
             if not shots: return
             errors.update(err)
-            self.populateShotItems(shots)
+            err = self.populateShotItems(shots)
+            if err: errors.update(err)
             self.shotBox.addItems(shots)
         except Exception as ex:
             self.releaseBusy()
@@ -160,11 +164,17 @@ class ShotExporter(Form1, Base1, cui.TacticUiBase):
                              details=qutil.dictionaryToDetails(errors))
             
     def populateShotItems(self, shots):
+        errors = {}
         for shot in sorted(shots):
-            item = Item(self, shot, be.Shot(self, shot))
+            fr, err = be.getShotFrameRange(shot)
+            if err: errors.update(err)
+            assets, err = be.getAssetsInShot(shot)
+            if err: errors.update(err)
+            item = Item(self, shot, be.Shot(parent=self, shot=shot, frameRange=fr, assets=assets))
             self.itemLayout.addWidget(item)
             self.items.append(item)
             item.hide()
+        return errors
             
     def showMessage(self, **kwargs):
         return cui.showMessage(self, __title__, **kwargs)
@@ -178,13 +188,51 @@ class ShotExporter(Form1, Base1, cui.TacticUiBase):
             seq = ''
         return seq
     
+    def getProject(self):
+        pro = self.projectBox.currentText()
+        if pro == '--Select Project--':
+            pro = ''
+        return pro
+    
     def isDirectory(self):
         return self.addDirectoryButton.isChecked()
     
     def getDirectory(self):
         return self.directoryBox.text()
     
-    def export(self):
+    def submit(self, filename, shots):
+        self.setBusy()
+        try:
+            deadlineCode = be.deadlineCode.format(**{'shots': shots,
+                                                   'user': iutil.getUsername()})
+            sh = shots[:]
+            if len(sh) > 1:
+                sh = [sh[0], sh[-1]]
+            jobInfo = be.deadlineJobInfo.format(**{'name': ' - '.join([self.getProject()] + sh)})
+            pluginInfo = be.deadlinePluginInfo.format(**{'version': str(imaya.maya_version()),
+                                                       'projectPath': osp.dirname(filename),
+                                                       'sceneFile': filename})
+            be.submitDeadlineJob(jobInfo, pluginInfo, deadlineCode)
+        except Exception as ex:
+            self.showMessage(msg=str(ex), icon=QMessageBox.Critical)
+        finally:
+            self.releaseBusy()
+        
+    
+    def export(self, mode='e'):
+        if mode == 's':
+            shots = self.shotBox.getSelectedItems()
+            if not shots:
+                self.showMessage(msg='Could not find a selected shot to export',
+                                 icon=QMessageBox.Information)
+                return
+            be.saveScene()
+            path = be.backupMayaFile(self.getSeq())
+            if path and osp.exists(path):
+                self.submit(path, shots)
+                self.showMessage(msg='Scene successfully submitted to deadline',
+                                 icon=QMessageBox.Information)
+            return
         if not osp.exists('C:\\Program Files\\ImageMagick-6.9.1-Q8'):
             self.showMessage(msg='Image Magick library is not installed on this system. Could not continue',
                              icon=QMessageBox.Warning)
@@ -204,12 +252,13 @@ class ShotExporter(Form1, Base1, cui.TacticUiBase):
                 if btn == QMessageBox.Cancel: return
                 if btn == QMessageBox.No: smooth = False
         if be.sceneModified():
-            btn = self.showMessage(msg='Scene contains unsaved changes',
-                                   ques='Do you want to save changes?',
-                                   icon=QMessageBox.Question,
-                                   btns=QMessageBox.Yes|QMessageBox.No|QMessageBox.Cancel)
-            if btn == QMessageBox.Cancel: return
-            if btn == QMessageBox.Yes: be.saveScene()
+            be.saveScene()
+#             btn = self.showMessage(msg='Scene contains unsaved changes',
+#                                    ques='Do you want to save changes?',
+#                                    icon=QMessageBox.Question,
+#                                    btns=QMessageBox.Yes|QMessageBox.No|QMessageBox.Cancel)
+#             if btn == QMessageBox.Cancel: return
+#             if btn == QMessageBox.Yes: be.saveScene()
         errors = {}
         try:
             self.setBusy()
@@ -221,15 +270,21 @@ class ShotExporter(Form1, Base1, cui.TacticUiBase):
             if shots:
                 be.displaySmoothness(False)
                 if any([shot.preview for shot in shots]):
-                    #imaya.toggleViewport2Point0(False)
+                    #imaya.toggleViewport2Point0(True)
                     imaya.toggleTextureMode(True)
                     be.displaySmoothness(smooth, self.smoothGeosets)
                 time1 = time2 = dataSize = 0
                 self.showProgressBar(len(shots))
                 for i, shot in enumerate(shots):
                     err = shot.export()
+                    if self.isDirectory():
+                        saveTime, er = self.saveToDirectory(shot.tempPath)
+                        if er: err.append(er)
+                    else:
+                        saveTime, er = self.saveToTactic(shot.tempPath)
+                        if er: err.extend(er)
                     time1 += shot.exportTime
-                    time2 += shot.saveTime
+                    time2 += saveTime
                     dataSize += shot.dataSize
                     if err: errors[shot.cameraName] = err
                     self.updateProgressBar(i + 1)
@@ -252,7 +307,20 @@ class ShotExporter(Form1, Base1, cui.TacticUiBase):
             #self.clearStatus()
             be.displaySmoothness(False)
             imaya.toggleTextureMode(False)
-            #imaya.toggleViewport2Point0(False)
+            imaya.toggleViewport2Point0(False)
+            
+    def saveToDirectory(self, shotPath):
+        if self.isDirectory():
+            self.setStatus('%s: Saving to %s'%(osp.basename(shotPath), self.getDirectory()))
+        saveTime, err = be.saveShotToDirectory(shotPath, osp.join(self.getDirectory(), osp.basename(shotPath)))
+        return saveTime, err
+    
+    def saveToTactic(self, path):
+        if path and osp.exists(path):
+            self.setStatus('%s: Saving to TACTIC'%(osp.basename(path)))
+            saveTime, err = be.uploadToTactic(path)
+            return saveTime, err
+        else: return 0, ''
 
 Form2, Base2 = uic.loadUiType(osp.join(uiPath, 'item.ui'))
 class Item(Form2, Base2):
@@ -305,10 +373,8 @@ class Item(Form2, Base2):
         self.splitter.setSizes([(self.width() * 40) / 100, (self.width() * 40) / 100, (self.width() * 20) / 100])
         
     def openLocation(self):
+        be.openShotLocation(self.shot.shot)
         self.shot.openLocation()
-#             self.parentWin.showMessage(msg='Errors occurred while getting path from TACTIC',
-#                                        icon=QMessageBox.Critical,
-#                                        details=iutil.dictionaryToDetails(err))
         
     def addSelectedGeoSets(self):
         self.shot.addSelectedGeoSets()

@@ -7,7 +7,6 @@ from shot_subm.src.backend import findAllConnectedGeosets
 from createLayout.src import utilities as utils
 import pymel.core as pc
 import maya.cmds as cmds
-import tacticCalls as tc
 import os.path as osp
 from datetime import datetime
 import subprocess
@@ -21,7 +20,6 @@ import os
 import re
 
 reload(utils)
-reload(tc)
 reload(iutil)
 reload(imaya)
 reload(fillinout)
@@ -32,10 +30,13 @@ from pprint import pprint
 tempLocation = osp.join(osp.expanduser('~'), 'multiShotExport')
 if not osp.exists(tempLocation):
     os.mkdir(tempLocation)
-    
+
+openMotionPath = "\"R:/Pipe_Repo/Users/Qurban/Scripts/openMotion.mel\""
 mel = """
-source "R:/Pipe_Repo/Users/Qurban/Scripts/openMotion.mel";
-"""
+source %s;
+"""%openMotionPath
+if not osp.exists(openMotionPath.strip('"')):
+    print 'Could not find %s, Nuke camera won\'t be exported'%openMotionPath
 pc.mel.eval(mel) 
 
 timeUnits= {
@@ -49,12 +50,14 @@ timeUnits= {
 }
 
 class Shot(object):
-    def __init__(self, parent=None, shot=None):
+    def __init__(self, parent=None, shot=None, user=iutil.getUsername(), 
+                 frameRange=None, assets=None):
         self.parentWin = parent
         self.shot = shot
         self.cache = True # determines whether to export cache or not
         self.preview = True # determines whether to export preview or not
         self.camera = True # determines whether to export camera or not
+        self.username = user
         self.cameraName = None
         self.startFrame = None
         self.endFrame = None
@@ -67,18 +70,10 @@ class Shot(object):
         self.nukeCamera = True # determines whether to export camera for nuke or not
         self.tempPath = None # temp path to shot directory in user home
         self.dataSize = 0
-        self.saveTime = 0
         self.exportTime = 0
-
-        self.setup()
-        self.saveToScene()
         
-    def openLocation(self):
-        path, errors = tc.getShotPath(self.shot)
-        if errors:
-            pc.warning(str(errors))
-        path = osp.normpath(path)
-        subprocess.Popen('explorer %s'%path)
+        self.setup(frameRange, assets)
+        self.saveToScene()
 
     def saveToScene(self):
         # save the settings of each shot on the camera attribute
@@ -88,7 +83,7 @@ class Shot(object):
                 'displayLayers': self.displayLayers, 'hdPreview': self.hdPreview,
                 'fullHdPreview': self.fullHdPreview, 'jpgPreview': self.jpgPreview,
                 'bakeCamera': self.bakeCamera, 'nukeCamera': self.nukeCamera,
-                'geosets': self.geosets}
+                'geosets': self.geosets, 'frameRange': (self.startFrame, self.endFrame)}
         pc.PyNode(self.cameraName).mseData.set(json.dumps(data))
     
     def addAttr(self):
@@ -97,7 +92,7 @@ class Shot(object):
             if not node.hasAttr('mseData'):
                 pc.addAttr(node, sn='mseData', ln='multiShotExportData', dt='string', h=True)
         
-    def setup(self):
+    def setup(self, frameRange, assets):
         '''initializes all the member variable according to the data
         stored on camera or to the default values'''
         errors = {}
@@ -115,14 +110,8 @@ class Shot(object):
         if rawData:
             data = json.loads(rawData)
         # set the frame range
-        frameRange, err = tc.getFrameRange(self.shot)
         if frameRange:
             self.startFrame, self.endFrame = frameRange
-        errors.update(err)
-
-        assets, err = tc.getAssetsInShot(self.shot)
-        assets = [x['asset_code'].lower() for x in assets]
-        errors.update(err)
         if data:
             # set the assets
             for geoset in getGeoSets():
@@ -130,13 +119,17 @@ class Shot(object):
                 if data['geosets'].has_key(geoset.name()):
                     self.geosets[geoset.name()] = data['geosets'][geoset.name()]
                 else:
-                    self.geosets[geoset.name()] = name in assets
+                    self.geosets[geoset.name()] = name in assets if assets else True
             # set display layers
             for layer in imaya.getDisplayLayers():
                 if data['displayLayers'].has_key(layer.name()):
                     self.displayLayers[layer.name()] = data['displayLayers'][layer.name()]
                 else:
                     self.displayLayers[layer.name()] = layer.visibility.get()
+            # set the frame range
+            fr = data.get('frameRange')
+            if not (self.startFrame and self.endFrame):
+                self.startFrame, self.endFrame = fr
             # set all remaining attributes
             self.cache = data['cache']
             self.preview = data['preview']
@@ -150,7 +143,7 @@ class Shot(object):
             # set the assets
             for geoset in getGeoSets():
                 name = imaya.getNiceName(geoset.name()).lower().replace('_geo_set', '')
-                self.geosets[geoset.name()] = name in assets
+                self.geosets[geoset.name()] = name in assets if assets else True
             # set the display layers
             for layer in imaya.getDisplayLayers():
                 self.displayLayers[layer.name()] = layer.visibility.get()
@@ -231,53 +224,44 @@ class Shot(object):
         t2 = time.time()
         if self.parentWin:
             self.parentWin.setStatus('%s: Exporting Camera'%self.getCameraNiceName())
+        else:
+            print '%s: Exporting Camera'%self.getCameraNiceName()
         err = self.exportCamera()
-        if err: errors.append(err)
+        if err:
+            errors.append(err)
+            print err
         state = getDisplayLayerState()
         if self.parentWin:
             self.parentWin.setStatus('%s: Exporting Preview'%self.getCameraNiceName())
+        else: print '%s: Exporting Preview'%self.getCameraNiceName()
         err = self.exportPreview()
         restoreDisplayLayerState(state)
-        if err: errors.append(err)
+        if err:
+            errors.append(err)
+            print err
         if self.parentWin:
             self.parentWin.setStatus('%s: Exporting Cache'%self.getCameraNiceName())
+        else: print '%s: Exporting Cache'%self.getCameraNiceName()
         err = self.exportCache()
-        if err: errors.extend(err)
+        if err:
+            errors.extend(err)
+            print err
         if self.parentWin:
             self.parentWin.setStatus('%s: Exporting Animated Textures'%self.getCameraNiceName())
+        else: print '%s: Exporting Animated Textures'%self.getCameraNiceName()
         err = self.exportAnimatedTextures()
         self.exportTime = time.time() - t2
-        if err: errors.append(err)
+        if err:
+            errors.append(err)
+            print err
         self.dataSize = iutil.get_directory_size(self.tempPath)
-        # upload to TACTIC
-        t1 = time.time()
-        if self.parentWin:
-            self.parentWin.setStatus('%s: Saving to TACTIC'%self.getCameraNiceName())
-        if self.parentWin:
-            if self.parentWin.isDirectory():
-                self.parentWin.setStatus('%s: Saving to %s'%(self.getCameraNiceName(), self.parentWin.getDirectory()))
-                err = self.saveShotsToDirectory()
-                if err: errors.append(err)
-            else:
-                err = tc.uploadShotToTactic(self.tempPath)
-                if err: errors.append(err)
-        else:
-            err = tc.uploadShotToTactic(self.tempPath)
-            if err: errors.append(err)
-        self.saveTime = time.time() - t1
         showFaceUi()
         hideShowCurves(False)
         return errors
     
-    def saveShotsToDirectory(self):
-        try:
-            shutil.copytree(self.tempPath, osp.join(self.parentWin.getDirectory(), self.getCameraNiceName()))
-        except Exception as ex:
-            return str(ex)
-    
     def exportCache(self):
-        errors = []
         if not self.cache: return
+        errors = []
         try:
             pc.select(cl=True)
             if self.geosets:
@@ -336,6 +320,8 @@ class Shot(object):
         imgMgcPath = 'C:\\Program Files\\ImageMagick-6.9.1-Q8'
         if not osp.exists(imgMgcPath):
             imgMgcPath = 'R:\\Pipe_Repo\\Users\\Qurban\\applications\\ImageMagick'
+            print 'Could not find ImageMagick, loading from %s'%imgMgcPath
+            if not osp.exists(imgMgcPath): print 'Could not find %s'%imgMgcPath
         try:
             path = self.playblast((1920, 1080)) +'.mov'
             # convert video preview to jpgs
@@ -351,7 +337,6 @@ class Shot(object):
                     imagePath = osp.join(osp.dirname(jpgPath), newName)
                     os.rename(osp.join(osp.dirname(jpgPath), image), imagePath)
             # add info to the jpgs
-            username = getUsername()
             cameraName = self.getCameraNiceName()
             time = getDateTime()
             jpgPath = osp.dirname(jpgPath)
@@ -359,16 +344,14 @@ class Shot(object):
             currentTimeUnit = pc.currentUnit(q=True, time=True)
             if currentTimeUnit in timeUnits:
                 fps = str(timeUnits[currentTimeUnit])
-            else:
-                fps = 'Unknown'
-            focalLength = str(pc.camera(pc.lookThru(q=True), q=True, focalLength=True))
+            focalLength = str(pc.PyNode(self.cameraName).focalLength.get())
             for image in sorted(os.listdir(jpgPath)):
                 imagePath = osp.join(jpgPath, image)
-                subprocess.call('\"'+ osp.join(imgMgcPath, 'convert.exe') +'\" %s -undercolor #00000060 -pointsize 35 -channel RGBA -fill white -draw "text 20,30 %s" -draw "text 850,30 %s" -draw "text 1680,30 %s" -draw "text 20,1050 %s" -draw "text 800,1050 %s" -draw "text 1680,1050 %s" %s'%(imagePath, username, cameraName, 'Frame_'+ image.split('.')[1], 'FocalLength_'+ focalLength, 'Time_'+ time, 'FPS_'+ fps, imagePath), shell=True)
+                subprocess.call('\"'+ osp.join(imgMgcPath, 'convert.exe') +'\" %s -undercolor #00000060 -pointsize 35 -channel RGBA -fill white -draw "text 20,30 %s" -draw "text 850,30 %s" -draw "text 1680,30 %s" -draw "text 20,1050 %s" -draw "text 800,1050 %s" -draw "text 1680,1050 %s" %s'%(imagePath, self.username, cameraName, 'Frame_'+ image.split('.')[1], 'FocalLength_'+ focalLength, 'Time_'+ time, 'FPS_'+ fps, imagePath), shell=True)
             # convert labled jpgs to .mov
             movPath = osp.join(self.tempPath, 'preview', self.getCameraNiceName() +'.mov')
             # extract audio
-            audioPath = osp.join(osp.dirname(movPath), 'audio.wav')
+            audioPath = osp.normpath(osp.join(osp.dirname(movPath), 'audio.wav'))
             subprocess.call('\"'+ osp.join(imgMgcPath, 'ffmpeg.exe') +'\" -i %s -vn -acodec copy %s'%(movPath, audioPath), shell=True)
             os.remove(movPath)
             # create mov file from jpgs
@@ -376,6 +359,12 @@ class Shot(object):
             # add extracted audio
             temp_hd = osp.join(osp.dirname(movPath), 'temp_hd.mov')
             temp_hd_2 = osp.join(osp.dirname(movPath), 'temp_hd_2.mov')
+            if osp.exists(audioPath) and osp.getsize(audioPath) == 0:
+                try:
+                    os.remove(audioPath)
+                    audioPath2 = osp.normpath(pc.ls(type='audio')[0].filename.get())
+                    subprocess.call('\"'+ osp.join(imgMgcPath, 'ffmpeg.exe') + '\" -i %s -ss %s -t %s -codec copy %s'%(audioPath2.replace('\\', '\\\\'), self.startFrame/float(fps), (self.endFrame - self.startFrame)/float(fps), audioPath.replace('\\', '\\\\')))
+                except: pass
             subprocess.call('\"'+ osp.join(imgMgcPath, 'ffmpeg.exe') +'\" -i %s -i %s -codec copy -shortest %s'%(movPath, audioPath, temp_hd), shell=True)
             os.rename(movPath, temp_hd_2)
             try: # if audio in 0 KB in size and no preview is generated
@@ -383,7 +372,7 @@ class Shot(object):
                 os.remove(temp_hd_2)
             except WindowsError:
                 os.rename(temp_hd_2, movPath)
-            os.remove(audioPath)
+            if osp.exists(audioPath): os.remove(audioPath)
         except Exception as ex:
             return str(ex)
  
@@ -515,15 +504,22 @@ class Shot(object):
                     pc.delete(newobj)
         except Exception as ex:
             return str(ex)
-        
+
+def saveShotToDirectory(src, des):
+    t = time.time()
+    error = ''
+    try:
+        shutil.copytree(src, des)
+    except Exception as ex:
+        error = str(ex)
+    saveTime = time.time() - t
+    return saveTime, error
+
 def isGeoSetValid(geoset):
     return pc.PyNode(geoset).hasAttr('cacheName')
         
 def saveScene():
     cmds.file(save=True, f=True)
-        
-def backupMayaFile(seq):
-    tc.checkin(seq, 'ANIMATION/MSE', '')
 
 def sceneModified():
     return cmds.file(q=True, modified=True)
@@ -589,9 +585,6 @@ def getProjectContext():
     return (imaya.getFileInfo(utils.projectKey), imaya.getFileInfo(utils.episodeKey),
             imaya.getFileInfo(utils.sequenceKey))
 
-def getUsername():
-    return os.environ['USERNAME']
-
 def getDateTime():
     return str(datetime.now()).split('.')[0].replace('-', '/').replace(' ', '_').replace(':', '-')
 
@@ -618,3 +611,90 @@ def hideShowCurves(flag):
             pc.showHidden(b=True)
     except: pass
     pc.select(sel)
+    
+def submitDeadlineJob(jobInfo, pluginInfo, pyScript):
+    tempdir = osp.join(osp.dirname(tempLocation), 'mseDeadlineInfo')
+    if not osp.exists(tempdir):
+        os.mkdir(tempdir)
+    jobInfoFile = osp.normpath(osp.join(tempdir, 'jobInfo.job'))
+    pluginInfoFile = osp.normpath(osp.join(tempdir, 'pluginInfo.job'))
+    pyFile = osp.normpath(osp.join(tempdir, 'mseDeadline.py'))
+    with open(jobInfoFile, 'w+') as f:
+        f.write(jobInfo)
+    with open(pluginInfoFile, 'w+') as f:
+        f.write(pluginInfo)
+    with open(pyFile, 'w+') as f:
+        f.write(pyScript)
+    subprocess.call(subprocess.list2cmdline([r'C:\Program Files\Thinkbox\Deadline8\bin\deadlinecommand.exe',
+                                             jobInfoFile, pluginInfoFile, pyFile]))
+#TODO: remove the comments
+def export(shots, user=iutil.getUsername(), smoothMeshes=True, viewport2point0=True, textureMode=True,
+           uploadToTactic=False):
+    errors = {}
+    try:
+        clearHomeDirectory()
+    except Exception as ex:
+        errors['Could not clear the temp directory'] = str(ex)
+    shotObjs = []
+    if uploadToTactic:
+        import tacticCalls as tc
+        tc.setServer(project=imaya.FileInfo.get(utils.projectKey))
+    for shot in shots:
+        shotObjs.append(Shot(shot=shot, user=user))
+    if any([shot.preview for shot in shotObjs]):
+        pass
+        #displaySmoothness(smoothMeshes)
+        #imaya.toggleViewport2Point0(viewport2point0)
+        #imaya.toggleTextureMode(textureMode)
+    for shot in shotObjs:
+        err = shot.export()
+        if uploadToTactic:
+            er = tc.uploadShotToTactic(shot.tempPath)
+            if er: err.append(er)
+        if err: errors[shot.cameraName] = err
+    return errors
+#TODO: remove the local paths, pass username as argument
+deadlineCode='''
+import sys
+from pprint import pprint
+sys.path.append('D:/My/Tasks/workSpace')
+sys.path.append('D:/My/Tasks/workSpace/utilities')
+sys.path.append('R:/Pipe_Repo/Projects/TACTIC')
+import multiShotExport as mse
+from pprint import pprint
+import maya.cmds as cmds
+pprint(mse.export({shots}, user='{user}', uploadToTactic=True))
+'''
+
+deadlineJobInfo='''
+Plugin=MayaBatch
+Name={name}
+Comment=
+Department=
+Pool=multishot
+SecondaryPool=
+Group=none
+Priority=50
+TaskTimeoutMinutes=0
+EnableAutoTimeout=False
+ConcurrentTasks=1
+LimitConcurrentTasksToNumberOfCpus=True
+MachineLimit=0
+Whitelist=
+LimitGroups=
+JobDependencies=
+OnJobComplete=Nothing
+Frames=1
+ChunkSize=1
+'''
+
+deadlinePluginInfo='''
+Version={version}
+Build=64bit
+ProjectPath={projectPath}
+SceneFile={sceneFile}
+StrictErrorChecking=False
+UseLegacyRenderLayers=0
+ScriptJob=True
+ScriptFilename=mseDeadline.py
+'''

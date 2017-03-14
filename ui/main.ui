@@ -214,6 +214,16 @@
        </widget>
       </item>
       <item>
+       <widget class="QPushButton" name="submitButton">
+        <property name="toolTip">
+         <string>Submit scene to deadline to export selected shots</string>
+        </property>
+        <property name="text">
+         <string>Submit</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QPushButton" name="pushButton_2">
         <property name="text">
          <string>Close</string>
