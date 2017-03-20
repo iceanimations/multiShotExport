@@ -627,7 +627,7 @@ def submitDeadlineJob(jobInfo, pluginInfo, pyScript):
         f.write(pyScript)
     subprocess.call(subprocess.list2cmdline([r'C:\Program Files\Thinkbox\Deadline8\bin\deadlinecommand.exe',
                                              jobInfoFile, pluginInfoFile, pyFile]))
-#TODO: remove the comments
+
 def export(shots, user=iutil.getUsername(), smoothMeshes=True, viewport2point0=True, textureMode=True,
            uploadToTactic=False):
     errors = {}
@@ -643,9 +643,9 @@ def export(shots, user=iutil.getUsername(), smoothMeshes=True, viewport2point0=T
         shotObjs.append(Shot(shot=shot, user=user))
     if any([shot.preview for shot in shotObjs]):
         pass
-        #displaySmoothness(smoothMeshes)
-        #imaya.toggleViewport2Point0(viewport2point0)
-        #imaya.toggleTextureMode(textureMode)
+        displaySmoothness(smoothMeshes)
+        imaya.toggleViewport2Point0(viewport2point0)
+        imaya.toggleTextureMode(textureMode)
     for shot in shotObjs:
         err = shot.export()
         if uploadToTactic:
@@ -653,25 +653,35 @@ def export(shots, user=iutil.getUsername(), smoothMeshes=True, viewport2point0=T
             if er: err.append(er)
         if err: errors[shot.cameraName] = err
     return errors
-#TODO: remove the local paths, pass username as argument
+#TODO: remove the local paths, pass username as argument, enable uploading
 deadlineCode='''
 import sys
 from pprint import pprint
-sys.path.append('D:/My/Tasks/workSpace')
-sys.path.append('D:/My/Tasks/workSpace/utilities')
+import os
+upload=True
+if os.environ['USERNAME'] == 'qurban.ali':
+    sys.path.append('D:/My/Tasks/workSpace')
+    sys.path.append('D:/My/Tasks/workSpace/utilities')
+    upload=False
+else:
+    sys.path.append('R:/Python_Scripts/plugins')
+    sys.path.append('R:/Python_Scripts/plugins/utilities')
+    if os.environ['USERNAME'] == 'talha.ahmed':
+        upload=False
 sys.path.append('R:/Pipe_Repo/Projects/TACTIC')
 import multiShotExport as mse
 from pprint import pprint
 import maya.cmds as cmds
-pprint(mse.export({shots}, user='{user}', uploadToTactic=True))
+pprint(mse.export({shots}, user='{user}', uploadToTactic=upload))
+print 'multishot finished'
 '''
-
+pool = 'multishottest' if iutil.getUsername() in ['qurban.ali', 'talha.ahmed'] else 'multishot'
 deadlineJobInfo='''
 Plugin=MayaBatch
 Name={name}
 Comment=
 Department=
-Pool=multishot
+Pool=%s
 SecondaryPool=
 Group=none
 Priority=50
@@ -686,12 +696,12 @@ JobDependencies=
 OnJobComplete=Nothing
 Frames=1
 ChunkSize=1
-'''
+'''%pool
 
 deadlinePluginInfo='''
 Version={version}
 Build=64bit
-ProjectPath={projectPath}
+ProjectPath=
 SceneFile={sceneFile}
 StrictErrorChecking=False
 UseLegacyRenderLayers=0

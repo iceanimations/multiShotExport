@@ -208,9 +208,8 @@ class ShotExporter(Form1, Base1, cui.TacticUiBase):
             sh = shots[:]
             if len(sh) > 1:
                 sh = [sh[0], sh[-1]]
-            jobInfo = be.deadlineJobInfo.format(**{'name': ' - '.join([self.getProject()] + sh)})
+            jobInfo = be.deadlineJobInfo.format(**{'name': ' - '.join(['MSE', self.getProject()] + sh)})
             pluginInfo = be.deadlinePluginInfo.format(**{'version': str(imaya.maya_version()),
-                                                       'projectPath': osp.dirname(filename),
                                                        'sceneFile': filename})
             be.submitDeadlineJob(jobInfo, pluginInfo, deadlineCode)
         except Exception as ex:
@@ -374,7 +373,6 @@ class Item(Form2, Base2):
         
     def openLocation(self):
         be.openShotLocation(self.shot.shot)
-        self.shot.openLocation()
         
     def addSelectedGeoSets(self):
         self.shot.addSelectedGeoSets()
