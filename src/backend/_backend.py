@@ -659,7 +659,8 @@ import sys
 import subprocess
 #subprocess.call(r'net use r: /del', shell=True)
 #subprocess.call(r'net use r: //ICE-TACTIC/pipeline /user:qurban.ali 13490', shell=True)
-print subprocess.call(r'\\\\ICE-TACTIC\\pipeline\mount\\mount.bat', shell=True)
+process = subprocess.Popen(r'\\\\ICE-TACTIC\\pipeline\mount\\mount.bat', shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+print process.communicate()[0]
 from pprint import pprint
 import os
 upload=True
