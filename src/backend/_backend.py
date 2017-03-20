@@ -659,17 +659,16 @@ import sys
 from pprint import pprint
 import os
 upload=True
-if os.environ['USERNAME'] == 'qurban.ali':
-    sys.path.append('D:/My/Tasks/workSpace')
-    sys.path.append('D:/My/Tasks/workSpace/utilities')
+if os.environ['USERNAME'] in ['qurban.ali', 'talha.ahmed']:
+    sys.path.insert(0, 'D:/My/Tasks/workSpace')
+    sys.path.append(0, 'D:/My/Tasks/workSpace/utilities')
     upload=False
-else:
-    sys.path.append('R:/Python_Scripts/plugins')
-    sys.path.append('R:/Python_Scripts/plugins/utilities')
-    if os.environ['USERNAME'] == 'talha.ahmed':
-        upload=False
+sys.path.append('R:/Python_Scripts/plugins')
+sys.path.append('R:/Python_Scripts/plugins/utilities')
 sys.path.append('R:/Pipe_Repo/Projects/TACTIC')
+print os.environ['USERNAME']
 import multiShotExport as mse
+print mse
 from pprint import pprint
 import maya.cmds as cmds
 pprint(mse.export({shots}, user='{user}', uploadToTactic=upload))
