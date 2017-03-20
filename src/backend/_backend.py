@@ -656,6 +656,8 @@ def export(shots, user=iutil.getUsername(), smoothMeshes=True, viewport2point0=T
 #TODO: remove the local paths, pass username as argument, enable uploading
 deadlineCode='''
 import sys
+import subprocess
+subprocess.call('//ICE-TACTIC/pipeline/mount/mount.bat')
 from pprint import pprint
 import os
 upload=True
