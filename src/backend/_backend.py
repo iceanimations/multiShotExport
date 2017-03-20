@@ -661,7 +661,7 @@ import os
 upload=True
 if os.environ['USERNAME'] in ['qurban.ali', 'talha.ahmed']:
     sys.path.insert(0, 'D:/My/Tasks/workSpace')
-    sys.path.append(0, 'D:/My/Tasks/workSpace/utilities')
+    sys.path.insert(0, 'D:/My/Tasks/workSpace/utilities')
     upload=False
 sys.path.append('R:/Python_Scripts/plugins')
 sys.path.append('R:/Python_Scripts/plugins/utilities')
