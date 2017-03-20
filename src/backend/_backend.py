@@ -657,7 +657,9 @@ def export(shots, user=iutil.getUsername(), smoothMeshes=True, viewport2point0=T
 deadlineCode='''
 import sys
 import subprocess
-subprocess.call('//ICE-TACTIC/pipeline/mount/mount.bat')
+#subprocess.call(r'net use r: /del', shell=True)
+#subprocess.call(r'net use r: //ICE-TACTIC/pipeline /user:qurban.ali 13490', shell=True)
+print subprocess.call(r'\\\\ICE-TACTIC\\pipeline\mount\\mount.bat', shell=True)
 from pprint import pprint
 import os
 upload=True
