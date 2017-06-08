@@ -128,7 +128,7 @@ class Shot(object):
                     self.displayLayers[layer.name()] = layer.visibility.get()
             # set the frame range
             fr = data.get('frameRange')
-            if not (self.startFrame and self.endFrame):
+            if (self.startFrame and self.endFrame) is None:
                 self.startFrame, self.endFrame = fr
             # set all remaining attributes
             self.cache = data['cache']
