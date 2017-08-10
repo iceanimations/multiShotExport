@@ -269,9 +269,10 @@ class ShotExporter(Form1, Base1, cui.TacticUiBase):
             if shots:
                 be.displaySmoothness(False)
                 if any([shot.preview for shot in shots]):
-                    imaya.toggleViewport2Point0(True)
-                    imaya.toggleTextureMode(True)
                     be.displaySmoothness(smooth, self.smoothGeosets)
+                    imaya.toggleTextureMode(True)
+                    imaya.toggleViewport2Point0(True)
+                    
                 time1 = time2 = dataSize = 0
                 self.showProgressBar(len(shots))
                 for i, shot in enumerate(shots):
