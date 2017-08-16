@@ -653,6 +653,16 @@ def export(shots, user=iutil.getUsername(), smoothMeshes=True, viewport2point0=T
             if er: err.append(er)
         if err: errors[shot.cameraName] = err
     return errors
+
+def assignMissingShaders():
+    shaders = []
+    for se in pc.ls(type='shadingEngine'):
+        if not se.surfaceShader.inputs():
+            shader = pc.shadingNode('lambert', asShader=True)
+            shader.outColor.connect(se.surfaceShader)
+            shaders.append(shader)
+    return shaders
+
 #TODO: remove the local paths, pass username as argument, enable uploading
 deadlineCode='''
 import sys
