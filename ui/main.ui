@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>799</width>
+    <width>465</width>
     <height>706</height>
    </rect>
   </property>
@@ -98,6 +98,53 @@
      </layout>
     </item>
     <item>
+     <layout class="QHBoxLayout" name="horizontalLayout_4">
+      <item>
+       <widget class="QCheckBox" name="cacheButton">
+        <property name="toolTip">
+         <string>Enable/Disable Cache for all selected shots</string>
+        </property>
+        <property name="text">
+         <string>Cache</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="previewButton">
+        <property name="toolTip">
+         <string>Enable/Disable Preview for all selected shots</string>
+        </property>
+        <property name="text">
+         <string>Preview</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="cameraButton">
+        <property name="toolTip">
+         <string>Enable/Disable Camera for all selected shots</string>
+        </property>
+        <property name="text">
+         <string>Camera</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <spacer name="horizontalSpacer_3">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+     </layout>
+    </item>
+    <item>
      <widget class="QScrollArea" name="scrollArea">
       <property name="focusPolicy">
        <enum>Qt::NoFocus</enum>
@@ -110,8 +157,8 @@
         <rect>
          <x>0</x>
          <y>0</y>
-         <width>779</width>
-         <height>531</height>
+         <width>445</width>
+         <height>503</height>
         </rect>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_3">
@@ -239,7 +286,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>799</width>
+     <width>465</width>
      <height>21</height>
     </rect>
    </property>

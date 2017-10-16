@@ -68,6 +68,9 @@ class ShotExporter(Form1, Base1, cui.TacticUiBase):
         self.browseButton.clicked.connect(self.setDirectory)
         self.directoryBox.textChanged.connect(self.handleDirectoryChange)
         self.geosetDialogButton.clicked.connect(self.showGeosetDialog)
+        self.previewButton.clicked[bool].connect(self.enableAllPreview)
+        self.cacheButton.clicked[bool].connect(self.enableAllCache)
+        self.cameraButton.clicked[bool].connect(self.enableAllCamera)
         
         self.shotBox = cui.MultiSelectComboBox(self, '--Shots--')
         self.shotBox.setStyleSheet('QPushButton{min-width: 100px;}')
@@ -80,6 +83,18 @@ class ShotExporter(Form1, Base1, cui.TacticUiBase):
         self.progressBar.hide()
         
         appUsageApp.updateDatabase('shot_subm')
+        
+    def enableAllPreview(self, state):
+        for item in self.getSelectedItems():
+            item.previewButton.setChecked(state)
+    
+    def enableAllCache(self, state):
+        for item in self.getSelectedItems():
+            item.cacheButton.setChecked(state)
+
+    def enableAllCamera(self, state):
+        for item in self.getSelectedItems():
+            item.cameraButton.setChecked(state)
         
     def showGeosetDialog(self):
         dialog = GeosetDialog(self)
@@ -119,9 +134,18 @@ class ShotExporter(Form1, Base1, cui.TacticUiBase):
         self.statusBar().showMessage(msg, timeout)
         qApp.processEvents()
         
-    def showSelectedItems(self, shots):
+    def getSelectedItems(self):
+        items = []
+        shots = self.shotBox.getSelectedItems()
         for item in self.items:
             if item.getTitle() in shots:
+                items.append(item)
+        return items
+        
+    def showSelectedItems(self):
+        items = self.getSelectedItems()
+        for item in self.items:
+            if item in items:
                 item.show()
             else: item.hide()
         
@@ -354,9 +378,9 @@ class Item(Form2, Base2):
         self.addButton.setIcon(QIcon(osp.join(iconPath, 'ic_add_char.png')))
 
         self.titleFrame.mouseReleaseEvent = self.collapse
-        self.cacheButton.clicked[bool].connect(self.handleCacheButton)
-        self.previewButton.clicked[bool].connect(self.handlePreviewButton)
-        self.cameraButton.clicked[bool].connect(self.handleCameraButton)
+        self.cacheButton.stateChanged[int].connect(self.handleCacheButton)
+        self.previewButton.stateChanged[int].connect(self.handlePreviewButton)
+        self.cameraButton.stateChanged[int].connect(self.handleCameraButton)
         self.cSelectAllButton.clicked[bool].connect(self.cSelectAll)
         self.pSelectAllButton.clicked[bool].connect(self.pSelectAll)
         self.bakeButton.clicked[bool].connect(self.handleBakeButton)
