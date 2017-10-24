@@ -549,6 +549,7 @@ def getConf():
     conf["cache_format"] = "mcc"
     conf["do_texture_export"] = 1
     conf["texture_export_data"] = [
+            ("(?i).*smart_car_aaber.*", ["layeredTexture1.outColor"]),
             ("(?i).*badr_robot.*", ["shader:layeredTexture1.outColor"]),
             ("(?i).*nano_regular.*", ["layeredTexture1.outColor"]),
             ("(?i).*nano_docking.*", ["layeredTexture1.outColor"]),
