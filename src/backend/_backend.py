@@ -289,7 +289,7 @@ class Shot(object):
         err = self.exportCache()
         if err:
             errors.extend(err)
-            print er
+            print err
         if self.parentWin:
             self.parentWin.setStatus(
                 '%s: Exporting Animated Textures' % self.getCameraNiceName())
