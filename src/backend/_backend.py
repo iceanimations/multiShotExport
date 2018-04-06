@@ -472,8 +472,8 @@ class Shot(object):
                     pass
             subprocess.call(
                 '\"' + osp.join(imgMgcPath, 'ffmpeg.exe') +
-                '\" -i %s -i %s -codec copy -filter_complex " [1:0] apad " ' +
-                '-shortest %s' % (movPath, audioPath, temp_hd),
+                ( '\" -i %s -i %s -codec copy -filter_complex " [1:0] apad " ' +
+                    '-shortest %s' ) % (movPath, audioPath, temp_hd),
                 shell=True)
             os.rename(movPath, temp_hd_2)
             try:  # if audio in 0 KB in size and no preview is generated
