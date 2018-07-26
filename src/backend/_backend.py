@@ -472,7 +472,7 @@ class Shot(object):
                     pass
             subprocess.call(
                 '\"' + osp.join(imgMgcPath, 'ffmpeg.exe') +
-                ('\" -i %s -i %s -codec copy -filter_complex " [1:0] apad " ' +
+                ('\" -i %s -i %s -filter_complex " [1:0] apad " ' +
                  '-shortest %s') % (movPath, audioPath, temp_hd),
                 shell=True)
             os.rename(movPath, temp_hd_2)
