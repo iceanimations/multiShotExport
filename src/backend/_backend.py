@@ -451,7 +451,7 @@ class Shot(object):
                                 'ffmpeg.exe') + '\" ' + ' -framerate ' + fps +
                 ' -start_number ' + str(self.startFrame) + ' -i ' + osp.join(
                     jpgPath, self.getCameraNiceName() + '.%05d.jpg') +
-                ' -c:v libx264 -g 1 -bf 0 ' + movPath,
+                ' -c:v libx264 -x264opts b_pyramid=0 -g 1 -bf 1 ' + movPath,
                 shell=True)
             # add extracted audio
             temp_hd = osp.join(osp.dirname(movPath), 'temp_hd.mov')
@@ -472,8 +472,9 @@ class Shot(object):
                     pass
             subprocess.call(
                 '\"' + osp.join(imgMgcPath, 'ffmpeg.exe') +
-                ('\" -i %s -i %s -shortest %s') %
-                (movPath, audioPath, temp_hd),
+                ('\" -i %s -i %s %s -shortest %s') %
+                (movPath, audioPath,
+                    '-c:v libx264 -x264opts b_pyramid=0 -g 1 -bf 1', temp_hd),
                 shell=True)
             os.rename(movPath, temp_hd_2)
             try:  # if audio in 0 KB in size and no preview is generated
@@ -512,7 +513,7 @@ class Shot(object):
             viewer=0,
             fp=4,
             percent=100,
-            compression="H.264",
+            compression='H.264',
             quality=100,
             widthHeight=resolution,
             offScreen=1,
