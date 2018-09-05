@@ -261,17 +261,14 @@ class Shot(object):
         hideFaceUi()
         hideShowCurves(True)
         t2 = time.time()
-        if self.parentWin:
             self.parentWin.setStatus(
                 '%s: Exporting Camera' % self.getCameraNiceName())
-        else:
             print '%s: Exporting Camera' % self.getCameraNiceName()
         err = self.exportCamera()
         if err:
             errors.append(err)
             print err
         state = getDisplayLayerState()
-        if self.parentWin:
             self.parentWin.setStatus(
                 '%s: Exporting Preview' % self.getCameraNiceName())
         else:
@@ -281,7 +278,6 @@ class Shot(object):
         if err:
             errors.append(err)
             print err
-        if self.parentWin:
             self.parentWin.setStatus(
                 '%s: Exporting Cache' % self.getCameraNiceName())
         else:
@@ -290,7 +286,6 @@ class Shot(object):
         if err:
             errors.extend(err)
             print err
-        if self.parentWin:
             self.parentWin.setStatus(
                 '%s: Exporting Animated Textures' % self.getCameraNiceName())
         else:
@@ -308,6 +303,8 @@ class Shot(object):
     def exportCache(self):
         if not self.cache:
             return
+            self.parentWin.setStatus('%s: Exporting Cache'%self.getCameraNiceName())
+        else: print '%s: Exporting Cache'%self.getCameraNiceName()
         errors = []
         try:
             pc.select(cl=True)
@@ -373,6 +370,8 @@ class Shot(object):
     def exportPreview(self):
         if not self.preview:
             return
+            self.parentWin.setStatus('%s: Exporting Preview'%self.getCameraNiceName())
+        else: print '%s: Exporting Preview'%self.getCameraNiceName()
         jpgPath = osp.join(self.tempPath, 'JPG')
         if not osp.exists(jpgPath):
             os.mkdir(jpgPath)
@@ -522,6 +521,9 @@ class Shot(object):
     def exportCamera(self):
         if not self.camera:
             return
+            self.parentWin.setStatus('%s: Exporting Camera'%self.getCameraNiceName())
+        else:
+            print '%s: Exporting Camera'%self.getCameraNiceName()
         try:
             path = osp.join(self.tempPath, 'camera')
             if not osp.exists(path):
@@ -626,6 +628,9 @@ class Shot(object):
 
     def exportAnimatedTextures(self):
         ''' bake export animated textures from the scene '''
+        if self.parentWin:
+            self.parentWin.setStatus('%s: Exporting Animated Textures'%self.getCameraNiceName())
+        else: print '%s: Exporting Animated Textures'%self.getCameraNiceName()
         try:
             conf = getConf()
             animatedTextures = self.getAnimatedTextures()
