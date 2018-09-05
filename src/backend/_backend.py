@@ -3,7 +3,7 @@ Created on Nov 24, 2015
 
 @author: qurban.ali
 '''
-from shot_subm.src.backend import findAllConnectedGeosets
+from multishot.src.backend import findAllConnectedGeosets
 from createLayout.src import utilities as utils
 import pymel.core as pc
 import maya.cmds as cmds
