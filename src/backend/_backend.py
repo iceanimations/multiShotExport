@@ -261,35 +261,20 @@ class Shot(object):
         hideFaceUi()
         hideShowCurves(True)
         t2 = time.time()
-            self.parentWin.setStatus(
-                '%s: Exporting Camera' % self.getCameraNiceName())
-            print '%s: Exporting Camera' % self.getCameraNiceName()
         err = self.exportCamera()
         if err:
             errors.append(err)
             print err
         state = getDisplayLayerState()
-            self.parentWin.setStatus(
-                '%s: Exporting Preview' % self.getCameraNiceName())
-        else:
-            print '%s: Exporting Preview' % self.getCameraNiceName()
         err = self.exportPreview()
         restoreDisplayLayerState(state)
         if err:
             errors.append(err)
             print err
-            self.parentWin.setStatus(
-                '%s: Exporting Cache' % self.getCameraNiceName())
-        else:
-            print '%s: Exporting Cache' % self.getCameraNiceName()
         err = self.exportCache()
         if err:
             errors.extend(err)
             print err
-            self.parentWin.setStatus(
-                '%s: Exporting Animated Textures' % self.getCameraNiceName())
-        else:
-            print '%s: Exporting Animated Textures' % self.getCameraNiceName()
         err = self.exportAnimatedTextures()
         self.exportTime = time.time() - t2
         if err:
@@ -303,6 +288,7 @@ class Shot(object):
     def exportCache(self):
         if not self.cache:
             return
+        if self.parentWin:
             self.parentWin.setStatus('%s: Exporting Cache'%self.getCameraNiceName())
         else: print '%s: Exporting Cache'%self.getCameraNiceName()
         errors = []
@@ -370,6 +356,7 @@ class Shot(object):
     def exportPreview(self):
         if not self.preview:
             return
+        if self.parentWin:
             self.parentWin.setStatus('%s: Exporting Preview'%self.getCameraNiceName())
         else: print '%s: Exporting Preview'%self.getCameraNiceName()
         jpgPath = osp.join(self.tempPath, 'JPG')
@@ -521,6 +508,7 @@ class Shot(object):
     def exportCamera(self):
         if not self.camera:
             return
+        if self.parentWin:
             self.parentWin.setStatus('%s: Exporting Camera'%self.getCameraNiceName())
         else:
             print '%s: Exporting Camera'%self.getCameraNiceName()
