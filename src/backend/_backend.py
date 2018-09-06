@@ -289,7 +289,8 @@ class Shot(object):
         if not self.cache:
             return
         if self.parentWin:
-            self.parentWin.setStatus('%s: Exporting Cache'%self.getCameraNiceName())
+            self.parentWin.setStatus('%s: Exporting Cache'
+                                     %self.getCameraNiceName())
         else: print '%s: Exporting Cache'%self.getCameraNiceName()
         errors = []
         try:
@@ -357,7 +358,8 @@ class Shot(object):
         if not self.preview:
             return
         if self.parentWin:
-            self.parentWin.setStatus('%s: Exporting Preview'%self.getCameraNiceName())
+            self.parentWin.setStatus('%s: Exporting Preview'
+                                     %self.getCameraNiceName())
         else: print '%s: Exporting Preview'%self.getCameraNiceName()
         jpgPath = osp.join(self.tempPath, 'JPG')
         if not osp.exists(jpgPath):
@@ -447,6 +449,7 @@ class Shot(object):
                     os.remove(audioPath)
                     audioPath2 = osp.normpath(
                         pc.ls(type='audio')[0].filename.get())
+                    # slice the audio for shot frame range
                     subprocess.call(
                         '\"' + osp.join(imgMgcPath, 'ffmpeg.exe') +
                         '\" -i %s -ss %s -t %s -codec copy %s' %
@@ -463,16 +466,16 @@ class Shot(object):
                     '-c:v libx264 -x264opts b_pyramid=0 -g 1 -bf 1', temp_hd),
                 shell=True)
             os.rename(movPath, temp_hd_2)
-            try:  # if audio in 0 KB in size and no preview is generated
+            try:
                 os.rename(temp_hd, movPath)
                 os.remove(temp_hd_2)
             except WindowsError:
+                # when temp_hd does not exist due to absence of audio
                 os.rename(temp_hd_2, movPath)
             if osp.exists(audioPath):
                 os.remove(audioPath)
         except Exception as ex:
             return str(ex)
-
         finally:
             pc.camera(self.cameraName, e=True, overscan=overscan)
             pc.PyNode(self.cameraName).panZoomEnabled.set(panZoomEnabled)
@@ -509,7 +512,8 @@ class Shot(object):
         if not self.camera:
             return
         if self.parentWin:
-            self.parentWin.setStatus('%s: Exporting Camera'%self.getCameraNiceName())
+            self.parentWin.setStatus('%s: Exporting Camera'
+                                     %self.getCameraNiceName())
         else:
             print '%s: Exporting Camera'%self.getCameraNiceName()
         try:
@@ -617,7 +621,8 @@ class Shot(object):
     def exportAnimatedTextures(self):
         ''' bake export animated textures from the scene '''
         if self.parentWin:
-            self.parentWin.setStatus('%s: Exporting Animated Textures'%self.getCameraNiceName())
+            self.parentWin.setStatus('%s: Exporting Animated Textures'
+                                     %self.getCameraNiceName())
         else: print '%s: Exporting Animated Textures'%self.getCameraNiceName()
         try:
             conf = getConf()
