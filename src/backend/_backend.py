@@ -533,7 +533,7 @@ class Shot(object):
                     duplicate_cam.attr(attr).set(lock=0)
                 for attr in ['rotateAxisX', 'rotateAxisY', 'rotateAxisZ']:
                     duplicate_cam.attr(attr).set(keyable=True)
-                    orig_cam.attr(attr).connect(duplicate_cam.attr(attr))
+                    #orig_cam.attr(attr).connect(duplicate_cam.attr(attr))
                 pc.parent(duplicate_cam, w=True)
                 pc.select([orig_cam, duplicate_cam])
                 constraints = set(pc.ls(type=pc.nt.ParentConstraint))
