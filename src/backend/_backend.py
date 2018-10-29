@@ -525,15 +525,14 @@ class Shot(object):
             if self.bakeCamera:
                 # duplicate and and bake the camera
                 duplicate_cam = pc.duplicate(
-                    rr=True, ic=True,
-                    name='mutishot_export_duplicate_camera')[0]
+                    rr=True, name='mutishot_export_duplicate_camera')[0]
                 for attr in [
                         'tx', 'ty', 'tz', 'sx', 'sy', 'sz', 'rx', 'ry', 'rz'
                 ]:
                     duplicate_cam.attr(attr).set(lock=0)
                 for attr in ['rotateAxisX', 'rotateAxisY', 'rotateAxisZ']:
                     duplicate_cam.attr(attr).set(keyable=True)
-                    #orig_cam.attr(attr).connect(duplicate_cam.attr(attr))
+                    orig_cam.attr(attr).connect(duplicate_cam.attr(attr))
                 pc.parent(duplicate_cam, w=True)
                 pc.select([orig_cam, duplicate_cam])
                 constraints = set(pc.ls(type=pc.nt.ParentConstraint))
